@@ -3,14 +3,14 @@ Compiler written for the "compilers" discipline of the Computer Engineering
 course.
 
 # How to compile
-To compile this project, you need to make the file 'compile.sh' a executable.
+To compile this project, you need to make the file "compile.sh" a executable.
 To do this, just run this code at your terminal:
 
 ```shell
     chmod +x ./compile.sh
 ```
 
-After this, you just need to run the script 'compile.sh':
+After this, you just need to run the script "compile.sh":
 
 ```shell
     ./compile.sh
