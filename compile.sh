@@ -2,5 +2,5 @@
 
 clear
 clear
-g++ -o ./bin/MyCompiler.app ./src/main.cpp ./src/validator.cpp
+g++ -o ./bin/MyCompiler.app ./src/main.cpp ./src/compiler.cpp
 

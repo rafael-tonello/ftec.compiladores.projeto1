@@ -3,8 +3,8 @@ Compiler written for the "compilers" discipline of the Computer Engineering
 course.
 
 # How to compile
-To compile this project, you need to make the file "compile.sh" a executable.
-To do this, just run this code at your terminal:
+To compile this project, you need to make the file "compile.sh" an executable.
+To do it, just run this code in your terminal:
 
 ```shell
     chmod +x ./compile.sh
@@ -23,10 +23,17 @@ folder 'bin'.
 
 ```c++
     // start
+    // The "E1" is the code entry point
     <E1>-> <var> | <E2>
     <E2> -> <while> | <if> | "{" + E2 + "}" | TokenName + "=" +<attribDef>
-    <attribDef>-> <TokenNameOrData> | <TokenNameOrData> + <mathoperators> + <attribDef>
-    <mathOperators> = + | - | * | / | ^
+    //<attribDef>-> <attribDef2> | <attribDef2> + ("+"|"-") + <TokenNameOrData>
+    //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
+    <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+    <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel2> + <attribDef>
+    <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+    <mathLevel1> -> + | - 
+    <mathLevel2> -> * | / | 
+    <mathLevel3> -> ^
     <TokenNameOrData> -> TokenName | number | string
 
     //var declaration
@@ -45,8 +52,9 @@ folder 'bin'.
     <blockOfCode> -> "{" +<E2> + "}"
 
     <blockOfLogic> -> "(" + <parentesisD> + ")"
+    <logicTokenNameOrData> -> attribDef | blockOfLogic
 
-    <parentesisD> -> <blockOfLogic> | <TokenNameOrData> + <LogicOperator> + <TokenNameOrData>
+    <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
     <logicOperator> -> > | < | >= | <= | == | !=
 ```
 
@@ -56,8 +64,7 @@ An example of code that should be interpreted
     var
         int cont, num
         real cont2 
-        
-    num = 0
+        num = 0
 
     while(cont < 10) {
         cont2 = 3.1415 * contador ^ 2 

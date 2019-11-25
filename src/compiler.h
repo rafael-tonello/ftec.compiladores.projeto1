@@ -1,5 +1,5 @@
-#ifndef __VALIDATOR__
-#define __VALIDATOR__
+#ifndef __COMPILER__
+#define __COMPILER__
 
 #include <iostream>
 #include <string>
@@ -8,14 +8,14 @@
 
 using namespace std;
 
-class Validator{
+class Compiler{
     private:
         queue<string> tokens;
         string getNextToken();
-        bool initialToken();
+        bool EntryPoint();
         
     public:
-        void validadte(vector<string> tokens);
+        vector<string> validadte(vector<string> tokens);
 };
 
 #endif
