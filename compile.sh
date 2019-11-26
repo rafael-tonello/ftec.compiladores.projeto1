@@ -2,5 +2,5 @@
 
 clear
 clear
-g++ -o ./bin/MyCompiler.app ./src/main.cpp ./src/compiler.cpp
+g++ -std=c++17 -o ./bin/MyCompiler.app ./src/main.cpp ./src/compiler.cpp
 
