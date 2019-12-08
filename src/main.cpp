@@ -28,7 +28,7 @@ int main()
         
     };
 
-    cout << "Hello, It's me" << endl;
+    cout << "Hello, can you hear me? Listen well: If you give this man a ride, sweet family will die." << endl;
 
 }
 

@@ -19,11 +19,15 @@ class Result{
 class Compiler{
     private:
         queue<string> tokens;
+        queue<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
         bool EntryPoint();
 
         Result var();
+        Result varDeclaration();
+        Result intDeclaration();
+        Result realDeclaration();
         
     public:
         vector<string> validadte(vector<string> tokens);

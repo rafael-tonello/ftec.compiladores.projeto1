@@ -24,38 +24,38 @@ folder 'bin'.
 ```c++
     // start
     // The "E1" is the code entry point
-    <E1>-> <var> | <E2>
-    <E2> -> <while> | <if> | "{" + E2 + "}" | TokenName + "=" +<attribDef>
+    [ ] <E1>-> <var> + <E2>| <E2>
+    [ ] <E2> -> <while> | <if> | "{" + E2 + "}" | TokenName + "=" +<attribDef>
     //<attribDef>-> <attribDef2> | <attribDef2> + ("+"|"-") + <TokenNameOrData>
     //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
-    <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
-    <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel2> + <attribDef>
-    <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
-    <mathLevel1> -> + | - 
-    <mathLevel2> -> * | / | 
-    <mathLevel3> -> ^
-    <TokenNameOrData> -> TokenName | number | string
+    [ ] <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+    [ ] <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel2> + <attribDef>
+    [ ] <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+    [ ] <mathLevel1> -> + | - 
+    [ ] <mathLevel2> -> * | / | 
+    [ ] <mathLevel3> -> ^
+    [ ] <TokenNameOrData> -> TokenName | number | string
 
     //var declaration
-    <var> -> "var" + <var declaration>
-    <var declaration> -> "\t" + <int> | "\t" + <real> | "\n" + <E2>
-    <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
-    <real> -> "real" + <TokenNamesList> + "\n" + <var declaration>
-    <TokenNamesList> -> TokenName | Tokename + "," + <TokenNamesList>
+    [ ] <var> -> "var"  + \n + <var declaration>
+    [ ] <var declaration> -> "\t" + <int> | "\t" + <real> | "\n" {exit}
+    [ ] <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
+    [ ] <real> -> "real" + <TokenNamesList> + "\n" + <var declaration>
+    [ ] <TokenNamesList> -> TokenName | Tokename + "," + <TokenNamesList>
 
     //while block
-    <while>-> "while" + <blockOfLogic> + <blockOfCode>
-    <blockOfCode> -> "{" +<E2> + "}"
+    [ ] <while>-> "while" + <blockOfLogic> + <blockOfCode>
+    [ ] <blockOfCode> -> "{" +<E2> + "}"
 
     //if block
-    <if>-> <blockOfLogic> + <blockOfCode>
-    <blockOfCode> -> "{" +<E2> + "}"
+    [ ] <if>-> <blockOfLogic> + <blockOfCode>
+    [ ] <blockOfCode> -> "{" +<E2> + "}"
 
-    <blockOfLogic> -> "(" + <parentesisD> + ")"
-    <logicTokenNameOrData> -> attribDef | blockOfLogic
+    [ ] <blockOfLogic> -> "(" + <parentesisD> + ")"
+    [ ] <logicTokenNameOrData> -> attribDef | blockOfLogic
 
-    <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
-    <logicOperator> -> > | < | >= | <= | == | !=
+    [ ] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
+    [ ] <logicOperator> -> > | < | >= | <= | == | !=
 ```
 
 An example of code that should be interpreted
