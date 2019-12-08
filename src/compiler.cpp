@@ -21,11 +21,25 @@ void Compiler::putBackToken(string token)
 /* This is the function that will receive the program (as a symbol vector) and
 returns its respective intermediate code (a code that can be converted to
 specific assembly for different processors) */
-vector<string> Compiler::validadte(vector<string> tokens)
+vector<string> Compiler::validate(vector<string> tokens)
 {
     for (auto &c: tokens)
         this->tokens.push(c);
-    
+
+    if (this->EntryPoint())
+    {
+        cout << endl << endl << " Intermediate code: " << endl;
+        for (auto &c: this->intermediateCode)
+            cout << "\t" << c << endl;
+        cout << endl << endl;
+            
+    }
+    else
+    {
+        cout << "Ohhh no! It not work!" << endl;
+    }
+
+
 }
 
 //Grammar: <E1>-> <var> | <E2>
@@ -40,18 +54,22 @@ bool Compiler::EntryPoint()
         //is a valid var declaration, but errors was found
         cout << result.errors;
 
-        return;
+        return false;
     }
 
+    cout << "Parece que foi" << endl;
 
-    Result result2 = EntryPoint2();
+
+   /* Result result2 = EntryPoint2();
     if (result2.wasRecognized && result2.errors != "")
     {
         //is a valid block of code, but errors was found
         cout << result.errors;
 
         return;
-    }
+    }*/
+
+    return true;
     
 }
 
@@ -119,14 +137,14 @@ Result Compiler::varDeclaration()
         if (nextToken == "int") 
         {
             //a int declaration
-            Result result2 = this->intDeclaration();
+            Result result2 = this->typeDeclaration("INT");
             if (result2.wasRecognized && result2.errors != "")
                 result.errors = "Error in int declaration:\r\n"+result2.errors;
         }
         else if (nextToken == "real")
         {
             //a real declration
-            Result result2 = this->realDeclaration();
+            Result result2 = this->typeDeclaration("REAL");
             if (result2.wasRecognized && result2.errors != "")
                 result.errors = "Error in real declaration:\r\n"+result2.errors;
         }
@@ -151,12 +169,12 @@ Result Compiler::varDeclaration()
 }
 
 //Grammar: <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
-Result Compiler::intDeclaration()
+Result Compiler::typeDeclaration(string type)
 {
     Result result;
     result.wasRecognized = true;
 
-    Result rTokenList = tokenNameList();
+    Result rTokenList = this->getTokenNameList();
     if (!rTokenList.wasRecognized || rTokenList.errors == "")
     {
         auto tk = this -> getNextToken();
@@ -168,16 +186,16 @@ Result Compiler::intDeclaration()
             else
             {
                 //add received names to variables list or intermiate code
-                while (rNextVarDec.find(',') != string::npos)
+                while (rTokenList.result.find(',') != string::npos)
                 {
-                    string nextVarName = rNextVarDec.substr(0, rNextVarDec.find(','));
-                    rNextVarDec = rNextVarDec.substr(rNextVarDec.find(','));
+                    string nextVarName = rTokenList.result.substr(0, rTokenList.result.find(','));
+                    rTokenList.result = rTokenList.result.substr(rTokenList.result.find(','));
 
                     //check in the intermediate code if the variable is not defined yet
                     double found = false;
                     for (auto &c: this->intermediateCode)
                     {
-                        if (c.indexOf("DEFINE") == 0 && c.indexOf(nextVarName) != string::npos)
+                        if (c.find("DEFINE") == 0 && c.find(nextVarName) != string::npos)
                         {
                             found = true;
                             break;
@@ -191,77 +209,61 @@ Result Compiler::intDeclaration()
                         return result;
                     }
 
-                    this->intermediateCode.push_back("DEFINE INTEGER "+nextVarName);
+                    this->intermediateCode.push_back("DEFINE "+type + " "+nextVarName);
                 }
             }
         }
         else
         {
-            result.errors "Expected a line break after token list name, but '" + tk + "' was found";
+            result.errors = "Expected a line break after token names list, but '" + tk + "' was found";
         }
 
     }
-    else{
+    else
+    {
         result.errors = "definition of names of integer variables with problem:\r\n"+rTokenList.errors;
     }
 
     return result;
 }
 
-//Grammar: <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
-Result Compiler::realDeclaration()
+//Grammar' <TokenNamesList> -> TokenName + "\n" | Tokename + "," + <TokenNamesList>
+Result Compiler::getTokenNameList()
 {
     Result result;
     result.wasRecognized = true;
+    string  nextName = this->getNextToken();
+    //validate the token name"
 
-    Result rTokenList = tokenNameList();
-    if (!rTokenList.wasRecognized || rTokenList.errors == "")
+    result.result = nextName;
+    //check if token list is done
+    string nextToken = this->getNextToken();
+
+    if (nextToken == ",")
     {
-        auto tk = this -> getNextToken();
-        if (tk == "\n")
+        Result tmp = this->getTokenNameList();
+        if (tmp.wasRecognized)
         {
-            Result rNextVarDec = this->varDeclaration();
-            if (rNextVarDec.wasRecognized && rNextVarDec.errors != "")
-                result.errors = "Invalid variables declaraion:\r\n"+rNextVarDec.errors;
+            if (tmp.errors == "")
+            {
+                result.result += "," + tmp.result;
+            }
             else
             {
-                //add received names to variables list or intermiate code
-                while (rNextVarDec.find(',') != string::npos)
-                {
-                    string nextVarName = rNextVarDec.substr(0, rNextVarDec.find(','));
-                    rNextVarDec = rNextVarDec.substr(rNextVarDec.find(','));
-
-                    //check in the intermediate code if the variable is not defined yet
-                    double found = false;
-                    for (auto &c: this->intermediateCode)
-                    {
-                        if (c.indexOf("DEFINE") == 0 && c.indexOf(nextVarName) != string::npos)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    //if variable is already declared, abor the process (define an error and return)
-                    if (found)
-                    {
-                        result.errors  = "Duplicate variable "+nextVarName;
-                        return result;
-                    }
-
-                    this->intermediateCode.push_back("DEFINE REAL "+nextVarName);
-                }
+                result.errors = "Error defining a list of names:\r\n" + tmp.errors;
             }
         }
-        else
-        {
-            result.errors "Expected a line break after token list name, but '" + tk + "' was found";
-        }
-
     }
-    else{
-        result.errors = "definition of names of integer variables with problem:\r\n"+rTokenList.errors;
+    else if(nextToken == "\n")
+    {
+        //just return
+    }
+    else
+    {
+        //unespected token after a token name
+        result.errors = "Unexpected token '"+nextToken+"' after token name '"+nextName+"'";
     }
 
     return result;
+
 }

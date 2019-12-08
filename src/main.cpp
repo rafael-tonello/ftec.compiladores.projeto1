@@ -1,4 +1,5 @@
 #include "main.h"
+#include "compiler.h"
 
 /*
     Planning 
@@ -28,7 +29,10 @@ int main()
         
     };
 
-    cout << "Hello, can you hear me? Listen well: If you give this man a ride, sweet family will die." << endl;
+    Compiler *cmp = new Compiler();
+    cmp->validate(tokens);
+
+    cout << "Hello, can you hear me? Listen well: If you give this man a ride, sweet family will die!" << endl;
 
 }
 

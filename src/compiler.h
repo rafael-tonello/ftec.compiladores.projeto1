@@ -19,18 +19,18 @@ class Result{
 class Compiler{
     private:
         queue<string> tokens;
-        queue<string> intermediateCode;
+        vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
         bool EntryPoint();
 
         Result var();
         Result varDeclaration();
-        Result intDeclaration();
-        Result realDeclaration();
+        Result typeDeclaration(string type);
+        Result getTokenNameList();
         
     public:
-        vector<string> validadte(vector<string> tokens);
+        vector<string> validate(vector<string> tokens);
 };
 
 #endif

@@ -41,7 +41,7 @@ folder 'bin'.
     [ ] <var declaration> -> "\t" + <int> | "\t" + <real> | "\n" {exit}
     [ ] <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
     [ ] <real> -> "real" + <TokenNamesList> + "\n" + <var declaration>
-    [ ] <TokenNamesList> -> TokenName | Tokename + "," + <TokenNamesList>
+    [ ] <TokenNamesList> -> TokenName + "\n" | Tokename + "," + <TokenNamesList>
 
     //while block
     [ ] <while>-> "while" + <blockOfLogic> + <blockOfCode>
