@@ -49,12 +49,12 @@ folder 'bin'.
     [■] <blockOfCode> -> "{" +<E2> + "}"
 
     //if block
-    [ ] <if>-> <blockOfLogic> + <blockOfCode>
+    [■] <if>-> <blockOfLogic> + <blockOfCode>
 
     [■] <blockOfLogic> -> "(" + <parentesisD> + ")"
-    [ ] <logicTokenNameOrData> -> attribDef | blockOfLogic
+    [■] <logicTokenNameOrData> -> attribDef | blockOfLogic
 
-    [ ] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
+    [■] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
     [ ] <logicOperator> -> > | < | >= | <= | == | !=
 ```
 

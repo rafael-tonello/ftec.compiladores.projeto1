@@ -746,7 +746,7 @@ Result Compiler::logicTokenNameOrData(string insertBefore)
         if (blockOfLogicResult.wasRecognized)
         {
             result.wasRecognized = true;
-            if (blockOfLogicResult == "")
+            if (blockOfLogicResult.errors == "")
             {
                 result.result = blockOfLogicResult.result;
             }
@@ -756,14 +756,29 @@ Result Compiler::logicTokenNameOrData(string insertBefore)
             }
         }
         else
+        {
             result.wasRecognized = false;
+        }
     }
 
     return result;
 }
 
+//Grammar: <logicOperator> -> > | < | >= | <= | == | !=
 Result Compiler::logicOperator(string insertBefore)
 {
-
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken == ">" || nextToken == "<" || nextToken == ">=" || nextToken == "<=" || nextToken == "==" || nextToken == "!=")
+    {
+        result.wasRecognized = true;
+        result.result = nextToken;
+    }
+    else
+    {
+        result.wasRecognized = false;
+        this->putBackToken(nextToken);
+    }
+    
 }
 
