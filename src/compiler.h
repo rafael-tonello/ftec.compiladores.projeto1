@@ -18,12 +18,15 @@ class Result{
 
 class Compiler{
     private:
+        int globalCount = 0;
         vector<string> tokens;
         vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
         Result EntryPoint();
         Result EntryPoint2();
+        void insertIntermediateCodeAfterLabel(string label, string code, int offset = 0);
+        string getNextTempName();
 
         Result var();
         Result varDeclaration();

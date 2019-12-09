@@ -168,6 +168,16 @@ Result Compiler::EntryPoint2()
     }
 }
 
+void Compiler::insertIntermediateCodeAfterLabel(string label, string code, int offset = 0)
+{
+
+}
+
+string Compiler::getNextTempName()
+{
+
+}
+
 
 #pragma region variable declaration
 //Grammar: <var> -> \n + "var" + <var declaration>
@@ -398,20 +408,35 @@ Result Compiler::_while()
 {
     Result result;
     string nextToken = this->getNextToken();
+    //checks if is a valid block
     if (nextToken == "while")
     {
         result.wasRecognized = true;
+
+        //insert the retry point of while
+        string returnLabelName = this->getNextTempName();
+        intermediateCode.push_back(":"+returnLabelName);
+
         Result rBlockOfLogic = this->blockOfLogic();
+        //validade the block of logic
         if (rBlockOfLogic.wasRecognized)
         {
             if (rBlockOfLogic.errors == "")
             {
+                //the block of lógic returns a <true label>,<false label>
+                //get the names of true and false label
+                string trueLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+
+                //validade block of code
                 Result rBlockOfCode = this->blockOfCode();
                 if (rBlockOfCode.wasRecognized)
                 {
                     if (rBlockOfCode.errors == "")
                     {
-                        //just return
+                        //add the while loopback to intermediate code (the code must be before the 'falseLabel')
+                        this->insertIntermediateCodeAfterLabel(falseLabel, "GOTO "+returnLabelName, -1);
+
                     }
                     else
                         result.errors = "Error in 'block of code' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
@@ -430,13 +455,16 @@ Result Compiler::_while()
     }
     else{
         result.wasRecognized = false;
+        this->putBackToken(nextToken);
     }
 
     return result;
 }
 
+//Grammar: <if>-> <blockOfLogic> + <blockOfCode>
 Result Compiler::_if()
 {
+   
 
 }
 
