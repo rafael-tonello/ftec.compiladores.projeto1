@@ -1,4 +1,9 @@
 #include "compiler.h"
+
+void debug(string msg)
+{
+    cout << "DEBUG: " << msg << endl;   
+}
         
 /* The program will come in a symbol vector (where each symbol can be a string,
  * or a number, or a variable name, or a special word, etc.). The compiler will
@@ -6,15 +11,14 @@
  * responsible for returning these symbols in the correct order (top to bottom). */
 string Compiler::getNextToken()
 {
-    string ret = this->tokens.front();
-    this->tokens.pop();
+    string ret = this->tokens[0];
+    this->tokens.erase(this->tokens.begin());
     return ret;
 }
 
 void Compiler::putBackToken(string token)
 {
-    this->tokens.push(token);
-
+    this->tokens.insert(this->tokens.begin(), token);
 }
         
 
@@ -24,22 +28,17 @@ specific assembly for different processors) */
 vector<string> Compiler::validate(vector<string> tokens)
 {
     for (auto &c: tokens)
-        this->tokens.push(c);
+        this->tokens.push_back(c);
 
     if (this->EntryPoint())
     {
-        cout << endl << endl << " Intermediate code: " << endl;
-        for (auto &c: this->intermediateCode)
-            cout << "\t" << c << endl;
-        cout << endl << endl;
+        cout << "Apers it work!" << endl;
             
     }
     else
     {
         cout << "Ohhh no! It not work!" << endl;
     }
-
-
 }
 
 //Grammar: <E1>-> <var> | <E2>
@@ -52,7 +51,7 @@ bool Compiler::EntryPoint()
     if (result.wasRecognized && result.errors != "")
     {
         //is a valid var declaration, but errors was found
-        cout << result.errors;
+        cout << "Some errors was found in var declaration: \r\n" <<  result.errors;
 
         return false;
     }
@@ -69,6 +68,12 @@ bool Compiler::EntryPoint()
         return;
     }*/
 
+    cout << "Returned errors: "<< result.errors << endl << endl << endl;
+    cout << endl << endl << " Intermediate code: " << endl;
+    for (auto &c: this->intermediateCode)
+        cout << "\t" << c << endl;
+    cout << endl << endl;
+
     return true;
     
 }
@@ -76,7 +81,9 @@ bool Compiler::EntryPoint()
 //Grammar: <var> -> \n + "var" + <var declaration>
 Result Compiler::var()
 {
+    cout << "DEBUG: enterred on var" << endl;
     Result result;
+    
 
     //get the next tocken from stack
     string nextToken = this->getNextToken();
@@ -84,7 +91,9 @@ Result Compiler::var()
     //chekcks if next token represents a valid variable declaration block
     if (nextToken == "var")
     {  
+        result.wasRecognized = true;
         nextToken = this->getNextToken();
+        
         if (nextToken == "\n")
         {
             result.wasRecognized = true;
@@ -105,10 +114,16 @@ Result Compiler::var()
             }
             else
             {
+                debug ("Invalid variable declaration");
                 result.errors = "Invalid variable declaration";
             }
         }
-        result.errors = "Invalid variable block (expecting \n after 'var' token)";
+        else
+        {
+            debug("Invalid variable block (expecting a line break after 'var' token but '"+nextToken+"' was found)");
+            result.errors = "Invalid variable block (expecting a line break after 'var' token but '"+nextToken+"' was found)";
+        }
+
     }
     else
     {
@@ -156,13 +171,24 @@ Result Compiler::varDeclaration()
         }
 
     }
-    else if (nextToken == "\n"){
+    else /*/if (nextToken == "\n")*/{
         //var exit condition
-        result.wasRecognized = true;
+        result.wasRecognized = false;
         result.errors = "";
-    }
+    /*}
     else{
-        result.errors = "Invalid var declaration (expecting \t or \n)";
+        debug(
+            "Invalid var declaration (expecting '\\t' or '\\n'. '"+
+            nextToken+
+            "', which size is "+
+            std::to_string(nextToken.size())+
+            ", and first character is '"+
+            std::to_string((int)nextToken[0])+
+            "', was found)')");
+        result.errors = "Invalid var declaration (expecting '\\t' or '\\n'. '"+nextToken+"' was found)";
+    }*/
+
+        this->putBackToken(nextToken);
     }
 
     return result;
@@ -180,38 +206,43 @@ Result Compiler::typeDeclaration(string type)
         auto tk = this -> getNextToken();
         if (tk == "\n")
         {
+            
+            
+            debug ("Received the var list: "+rTokenList.result);
+            rTokenList.result = rTokenList.result + ",";
+            //add received names to variables list or intermiate code
+            while (rTokenList.result.find(',') != string::npos)
+            {
+                string nextVarName = rTokenList.result.substr(0, rTokenList.result.find(','));
+                rTokenList.result = rTokenList.result.substr(rTokenList.result.find(',')+1);
+
+                //check in the intermediate code if the variable is not defined yet
+                double found = false;
+                debug("Parsing the varname " + nextVarName);
+                for (auto &c: this->intermediateCode)
+                {
+
+                    if (c.find("DEFINE") == 0 && c.find(nextVarName) == c.size() - nextVarName.size())
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                //if variable is already declared, abor the process (define an error and return)
+                if (found)
+                {
+                    result.errors  = "Duplicate variable "+nextVarName;
+                    return result;
+                }
+
+                debug ("Insert define of "+nextVarName+":"+type+" in the intermediate code");
+
+                this->intermediateCode.push_back("DEFINE "+type + " "+nextVarName);
+            }
             Result rNextVarDec = this->varDeclaration();
             if (rNextVarDec.wasRecognized && rNextVarDec.errors != "")
                 result.errors = "Invalid variables declaraion:\r\n"+rNextVarDec.errors;
-            else
-            {
-                //add received names to variables list or intermiate code
-                while (rTokenList.result.find(',') != string::npos)
-                {
-                    string nextVarName = rTokenList.result.substr(0, rTokenList.result.find(','));
-                    rTokenList.result = rTokenList.result.substr(rTokenList.result.find(','));
-
-                    //check in the intermediate code if the variable is not defined yet
-                    double found = false;
-                    for (auto &c: this->intermediateCode)
-                    {
-                        if (c.find("DEFINE") == 0 && c.find(nextVarName) != string::npos)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    //if variable is already declared, abor the process (define an error and return)
-                    if (found)
-                    {
-                        result.errors  = "Duplicate variable "+nextVarName;
-                        return result;
-                    }
-
-                    this->intermediateCode.push_back("DEFINE "+type + " "+nextVarName);
-                }
-            }
         }
         else
         {
@@ -256,7 +287,8 @@ Result Compiler::getTokenNameList()
     }
     else if(nextToken == "\n")
     {
-        //just return
+        //put back the "\n" in the token list (typeDeclaraion need them)
+        this->putBackToken("\n");
     }
     else
     {

@@ -18,7 +18,7 @@ class Result{
 
 class Compiler{
     private:
-        queue<string> tokens;
+        vector<string> tokens;
         vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);

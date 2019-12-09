@@ -20,9 +20,10 @@ int main()
     M_ = SYMBOL
     C_ = CONST*/
     vector<string> tokens = {
-        "\"var\"", "\n"
-            "\t", "\"int\"", "cont", ",", "num", "\n",
-            "\t", "\"real\"", "cont2", "\n",
+        "var", "\n",
+            "\t", "int", "cont", ",", "num", "\n",
+            "\t", "real", "cont2", "\n",
+            
         "num", "=", "0", "\n",
 
         "while", "(", "cont", "<", "10", ")", "{",
