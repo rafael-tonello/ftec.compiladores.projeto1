@@ -423,10 +423,13 @@ Result Compiler::_while()
         {
             if (rBlockOfLogic.errors == "")
             {
-                //the block of lógic returns a <true label>,<false label>
+                //the block of lógic returns a <true label>,<false label>,<exit label>
                 //get the names of true and false label
                 string trueLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
-                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+                rBlockOfLogic.result = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+
 
                 //validade block of code
                 Result rBlockOfCode = this->blockOfCode();
@@ -434,8 +437,9 @@ Result Compiler::_while()
                 {
                     if (rBlockOfCode.errors == "")
                     {
-                        //add the while loopback to intermediate code (the code must be before the 'falseLabel')
-                        this->insertIntermediateCodeAfterLabel(falseLabel, "GOTO "+returnLabelName, -1);
+                        //add the while loopback to intermediate code (the code must be after the 'exitLabel')
+                        //this->insertIntermediateCodeAfterLabel(falseLabel, "GOTO "+returnLabelName, -1);
+                        this->insertIntermediateCodeAfterLabel(exitLabel, "GOTO "+returnLabelName);
 
                     }
                     else
