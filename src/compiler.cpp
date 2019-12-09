@@ -1,5 +1,6 @@
 #include "compiler.h"
 
+#pragma region entrypoints and auxiliar methods
 void debug(string msg)
 {
     cout << "DEBUG: " << msg << endl;   
@@ -196,6 +197,10 @@ string Compiler::getNextTempName()
 {
     return string("ID_"+std::to_string(this->globalCount++));
 }
+
+#pragma endregion
+
+#pragma region attribuition and matematical operations
 
 //Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
 Result Compiler::attribDef(string insertBefore)
@@ -498,6 +503,7 @@ bool Compiler::isNumber(string possibleNumber)
 
     return true;
 }
+#pragma endregion
 
 #pragma region variable declaration
 //Grammar: <var> -> \n + "var" + <var declaration>
