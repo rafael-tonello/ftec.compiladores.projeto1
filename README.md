@@ -46,7 +46,7 @@ folder 'bin'.
 
     //while block
     [■] <while>-> "while" + <blockOfLogic> + <blockOfCode>
-    [ ] <blockOfCode> -> "{" +<E2> + "}"
+    [■] <blockOfCode> -> "{" +<E2> + "}"
 
     //if block
     [ ] <if>-> <blockOfLogic> + <blockOfCode>

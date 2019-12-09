@@ -524,6 +524,29 @@ Result Compiler::_if()
 //Grammar: <blockOfCode> -> "{" +<E2> + "}"
 Result Compiler::blockOfCode()
 {
+    Result result;
+    string openKeysToken = this->getNextToken();
+    if (openKeysToken == "{")
+    {
+        result.wasRecognized = true;
+        Result e2Result = EntryPoint2();
+        if (e2Result.wasRecognized)
+        {
+            if (e2Result.errors != "")
+            {
+                result.errors = "Error in block of code:\r\n"+e2Result.errors;
+            }
+        }
+        else{
+            result.errors = "Error in block of code: code was not recognized";
+        }
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+
+    return result;
 
 }
 
