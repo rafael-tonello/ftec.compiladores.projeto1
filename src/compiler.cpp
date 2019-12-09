@@ -544,13 +544,37 @@ Result Compiler::blockOfCode()
     else
     {
         result.wasRecognized = false;
+        this->putBackToken(openKeysToken);
     }
 
     return result;
 
 }
 
+//<blockOfLogic> -> "(" + <parentesisD> + ")"
 Result Compiler::blockOfLogic()
 {
-
+    Result result;
+    string openParentesisToken = this->getNextToken();
+    if (openParentesisToken == "(")
+    {
+        result.wasRecognized = true;
+        Result parantesisDResult = this->parentesisD();
+        if (parantesisDResult.wasRecognized)
+        {
+            if (parantesisDResult.errors != "")
+            {
+                result.errors = "Error in block of logic:\r\n"+parantesisDResult.errors;
+            }
+        }
+        else
+        {
+            result.errors = "Error in block of logic: parentesis structure was not reconized";
+        }
+    }
+    else
+    {
+        result.wasRecognized = false;
+        this->putBackToken(openParentesisToken);
+    }
 }
