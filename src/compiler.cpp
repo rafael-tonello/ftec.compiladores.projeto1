@@ -577,4 +577,6 @@ Result Compiler::blockOfLogic()
         result.wasRecognized = false;
         this->putBackToken(openParentesisToken);
     }
+
+    return result;
 }
