@@ -392,3 +392,61 @@ Result Compiler::getTokenNameList()
 
 }
 #pragma endregion
+
+//Grammar: <while>-> "while" + <blockOfLogic> + <blockOfCode>
+Result Compiler::_while()
+{
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken == "while")
+    {
+        result.wasRecognized = true;
+        Result rBlockOfLogic = this->blockOfLogic();
+        if (rBlockOfLogic.wasRecognized)
+        {
+            if (rBlockOfLogic.errors == "")
+            {
+                Result rBlockOfCode = this->blockOfCode();
+                if (rBlockOfCode.wasRecognized)
+                {
+                    if (rBlockOfCode.errors == "")
+                    {
+                        //just return
+                    }
+                    else
+                        result.errors = "Error in 'block of code' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
+                }
+                else
+                    result.errors = "Missing or invalid 'block of code' of a 'while' structure";
+            }
+            else
+            {
+                result.errors = "Error in 'logic' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
+            }
+        }
+        else
+            result.errors = "Missing or invalid 'logic' of a 'while' structure";
+
+    }
+    else{
+        result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+Result Compiler::_if()
+{
+
+}
+
+//Grammar: <blockOfCode> -> "{" +<E2> + "}"
+Result Compiler::blockOfCode()
+{
+
+}
+
+Result Compiler::blockOfLogic()
+{
+
+}

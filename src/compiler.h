@@ -29,6 +29,11 @@ class Compiler{
         Result varDeclaration();
         Result typeDeclaration(string type);
         Result getTokenNameList();
+
+        Result _while();
+        Result _if();
+        Result blockOfCode();
+        Result blockOfLogic();
         
     public:
         vector<string> validate(vector<string> tokens);
