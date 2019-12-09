@@ -24,8 +24,8 @@ folder 'bin'.
 ```c++
     // start
     // The "E1" is the code entry point
-    [ ] <E1>-> <var> + <E2>| <E2>
-    [ ] <E2> -> <while> | <if> | "{" + E2 + "}" | TokenName + "=" +<attribDef>
+    [◧] <E1>-> <var> + <E2>| <E2>
+    [ ] <E2> -> <while> | <if> | <blockOfCode> | TokenName + "=" +<attribDef> | {exit}
     //<attribDef>-> <attribDef2> | <attribDef2> + ("+"|"-") + <TokenNameOrData>
     //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
     [ ] <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
@@ -37,11 +37,11 @@ folder 'bin'.
     [ ] <TokenNameOrData> -> TokenName | number | string
 
     //var declaration
-    [ ] <var> -> "var"  + \n + <var declaration>
-    [ ] <var declaration> -> "\t" + <int> | "\t" + <real> | "\n" {exit}
-    [ ] <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
-    [ ] <real> -> "real" + <TokenNamesList> + "\n" + <var declaration>
-    [ ] <TokenNamesList> -> TokenName + "\n" | Tokename + "," + <TokenNamesList>
+    [■] <var> -> "var"  + \n + <var declaration>
+    [■] <var declaration> -> "\t" + <int> | "\t" + <real> | "\n" {exit}
+    [■] <int> -> "int" + <TokenNamesList> + "\n" + <var declaration>
+    [■] <real> -> "real" + <TokenNamesList> + "\n" + <var declaration>
+    [■] <TokenNamesList> -> TokenName + "\n" | Tokename + "," + <TokenNamesList>
 
     //while block
     [ ] <while>-> "while" + <blockOfLogic> + <blockOfCode>
@@ -49,7 +49,6 @@ folder 'bin'.
 
     //if block
     [ ] <if>-> <blockOfLogic> + <blockOfCode>
-    [ ] <blockOfCode> -> "{" +<E2> + "}"
 
     [ ] <blockOfLogic> -> "(" + <parentesisD> + ")"
     [ ] <logicTokenNameOrData> -> attribDef | blockOfLogic

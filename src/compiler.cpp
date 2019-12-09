@@ -42,18 +42,18 @@ vector<string> Compiler::validate(vector<string> tokens)
 }
 
 //Grammar: <E1>-> <var> | <E2>
-bool Compiler::EntryPoint()
+Result Compiler::EntryPoint()
 {
+    Result result;
+    Result rVar = var();
 
-    Result result = var();
 
-
-    if (result.wasRecognized && result.errors != "")
+    if (rVar.wasRecognized && result.errors != "")
     {
+        result.wasRecognized = true;
         //is a valid var declaration, but errors was found
-        cout << "Some errors was found in var declaration: \r\n" <<  result.errors;
+        result.errors =  "Some errors was found in var declaration: \r\n" <<  result.errors;
 
-        return false;
     }
 
     cout << "Parece que foi" << endl;
@@ -74,10 +74,102 @@ bool Compiler::EntryPoint()
         cout << "\t" << c << endl;
     cout << endl << endl;
 
-    return true;
+    return result;
     
 }
 
+//grammar: <E2> -> <while> | <if> | <blockOfCode> | TokenName + "=" +<attribDef> | {exit}
+Result Compiler::EntryPoint2()
+{
+    Result result;
+    //first sequence
+    Result rWhile = this->_while();
+    if (rWhile.wasRecognized)
+    {
+        result.wasRecognized = true;
+
+        if (rWhile.errors != "")
+            result.errors = "Error in a 'while' definition:\r\n"+rWhile.errors;
+
+    }
+    else{
+        //second sequence
+        Result rIf = this->_if();
+        if (rIf.wasRecognized)
+        {
+            result.wasRecognized = true;
+            if (rIf.errors != "")
+                result.errors = "Error in a 'if' definition:\r\n"+rIf.errors;
+        }
+        else {
+            //third sequence
+            Result rBlockOfCode = this->blockOfCode();
+            if (rBlockOfCode.wasRecognized)
+            {
+                if (rBlockOfCode.errors != "")
+                    result.errors = "Error in a 'block of code' definition:\r\n"+rBlockOfCode.errors;
+            }
+            else
+            {
+                //fourth sequence
+                string token = this->getNextToken();
+
+                if (string("\r\r\t ").find(token) == string::npos)
+                {
+                    //checks if exista a variable declaration with this token
+                    bool found = false;
+                    for (auto &c: this->intermediateCode)
+                    {
+
+                        if (c.find("DEFINE") == 0 && c.find(token) == c.size() - token.size())
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        string attribCanical = this->getNextToken();
+                        if (attribCanical == "=")
+                        {
+                            //call attribDef method and get the variable that must be attributed to current token
+                            Result rAttribDef = this->attribDef();
+                            if (rAttribDef.wasRecognized)
+                            {
+                                if (rAttribDef.errors == "")
+                                {
+                                    //insert the attribuition to current toke to intermediate code
+                                    this->intermediateCode.push_back("ATTRIB "+ token +" "+rAttribDef.result);
+
+                                }
+                                else
+                                {
+                                    result.errors = "Error defining attribuition of "+token+": \r\n" + rAttribDef.errors;
+                                }
+                            }
+                            else
+                            {
+                                result.errors = "Attribuition of "+token+" was not recognized by the compiler";
+                            }
+                        }
+                        else
+                        {
+                            result.errors = "Missing '=' after token name (after "+token+")";
+                        }
+                    }
+                    else
+                    {
+                        result.errors = "Unknown token '"+token+"'. Didn't you forget to declare it?";
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+#pragma region variable declaration
 //Grammar: <var> -> \n + "var" + <var declaration>
 Result Compiler::var()
 {
@@ -217,7 +309,7 @@ Result Compiler::typeDeclaration(string type)
                 rTokenList.result = rTokenList.result.substr(rTokenList.result.find(',')+1);
 
                 //check in the intermediate code if the variable is not defined yet
-                double found = false;
+                bool found = false;
                 debug("Parsing the varname " + nextVarName);
                 for (auto &c: this->intermediateCode)
                 {
@@ -299,3 +391,4 @@ Result Compiler::getTokenNameList()
     return result;
 
 }
+#pragma endregion

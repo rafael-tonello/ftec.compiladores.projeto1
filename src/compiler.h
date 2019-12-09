@@ -22,7 +22,8 @@ class Compiler{
         vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
-        bool EntryPoint();
+        Result EntryPoint();
+        Result EntryPoint2();
 
         Result var();
         Result varDeclaration();
