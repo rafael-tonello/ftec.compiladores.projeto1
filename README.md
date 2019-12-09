@@ -92,30 +92,39 @@ An example of output
 
     ;while
     :TMP_01
-        ;(cont < 0)
+        ;(cont < 10)
         CHECK_EQUALS CONT 10 TMP_02
         GOTO TMP_03
-
+        
+        ;{
         :TMP_02
+            ;cont2 = 3.1415 * cont ^ 2
             MATH_POW CONT 2 TMP_05
             MATH_MUL TEMP_05 3.1415 TMP_06
             ATTRIB CONT2 TMP_06
 
+            ;if (cont < 5)
             CHECK_LESSTHAN CONT 5 TEMP_07
             GOTO TMP_08
+            ;{
             :TMP_07
+                ;num = num + cont2
                 MATH_SUM NUM CONT2 TMP_10
                 ATTRIB NUM TMP_10
 
             GOTO TMP_09
+            ;}else{
             :TMP_08
+                ;cont = 0
                 ATTRIB CONT 0
-
+            
+            ;}
             :TMP_09
-
+            ;cont = cont +1    
             MATH_SUM CONT 1 TMP_11
             ATTRIB CONT TMP_11
             GOTO TMP_01
+        ;}
         GOTO :TMP_04
         :TMP_03
 
