@@ -40,7 +40,14 @@ class Compiler{
         Result parentesisD(string insertBefore);
         Result logicTokenNameOrData(string insertBefore);
         Result logicOperator(string insertBefore);
-        Result attribDef(string insertBefore)
+        Result attribDef(string insertBefore);
+        Result attribDef2(string insertBefore);
+        Result attribDef3(string insertBefore);
+        Result mathLevel1(string insertBefore);
+        Result mathLevel2(string insertBefore);
+        Result mathLevel3(string insertBefore);
+        Result tokenNameOrData(string insertBefore);
+        bool isNumber(string possibleNumber);
         
     public:
         vector<string> validate(vector<string> tokens);

@@ -29,13 +29,13 @@ folder 'bin'.
     [■] <E2> -> <while> | <if> | <blockOfCode> | TokenName + "=" +<attribDef> | {exit}
     //<attribDef>-> <attribDef2> | <attribDef2> + ("+"|"-") + <TokenNameOrData>
     //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
-    [ ] <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
-    [ ] <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel2> + <attribDef>
-    [ ] <attribDef2>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
-    [ ] <mathLevel1> -> + | - 
-    [ ] <mathLevel2> -> * | / | 
-    [ ] <mathLevel3> -> ^
-    [ ] <TokenNameOrData> -> TokenName | number | string
+    [■] <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+    [■] <attribDef2>-> <attribDef3> | <attribDef3> + <mathLevel2> + <attribDef>
+    [■] <attribDef3>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+    [■] <mathLevel1> -> + | - 
+    [■] <mathLevel2> -> * | / | 
+    [■] <mathLevel3> -> ^
+    [■] <TokenNameOrData> -> TokenName | number | string
 
     //var declaration
     [■] <var> -> "var"  + \n + <var declaration>
@@ -55,7 +55,7 @@ folder 'bin'.
     [■] <logicTokenNameOrData> -> attribDef | blockOfLogic
 
     [■] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
-    [ ] <logicOperator> -> > | < | >= | <= | == | !=
+    [■] <logicOperator> -> > | < | >= | <= | == | !=
 ```
 
 An example of code that should be interpreted

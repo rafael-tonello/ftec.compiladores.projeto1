@@ -197,9 +197,306 @@ string Compiler::getNextTempName()
     return string("ID_"+std::to_string(this->globalCount++));
 }
 
+//Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
 Result Compiler::attribDef(string insertBefore)
 {
+    Result result;
+    Result attribDef2Result = this->attribDef2(insertBefore);
+    if (attribDef2Result.wasRecognized)
+    {
+        result.wasRecognized = true;
+        if (attribDef2Result.errors == "")
+        {
+            //checks by mathLevel1
+            Result mathLevel1Result = this->mathLevel1();
+            if (mathLevel1Result.wasRecognized)
+            {
+                Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+                if (tokenNameOrDataResult.wasRecognized)
+                {
+                    if (tokenNameOrDataResult.errors == "")
+                    {
+                        string resultVariable = this->getNextTempName();
+                        //define matematical operator name
+                        string mathOperator = mathLevel1Result.result;
+                        if (mathOperator == "+")
+                            mathOperator = "SUM";
+                        else if (mathOperator == "-")
+                            mathOperator = "SUB";
 
+                        this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef2Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
+                        result.result = resultVariable;
+
+                    }
+                    else
+                        result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
+                }
+                else
+                {
+                    result.errors = "second operand of an attribuition with a matematical operation was not recognized";
+                }
+            }
+            else
+            {
+                //a simple attribuition
+                result.result = attribDef2Result.result;
+            }
+        }
+        else
+        {
+            result.errors = "attribDef error:\r\n"+attribDef2Result.errors;
+        }
+
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+}
+
+//Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+Result Compiler::attribDef2(string insertBefore)
+{
+    Result result;
+    Result attribDef3Result = this->attribDef3(insertBefore);
+    if (attribDef3Result.wasRecognized)
+    {
+        result.wasRecognized = true;
+        if (attribDef3Result.errors == "")
+        {
+            //checks by mathLevel1
+            Result mathLevel2Result = this->mathLevel2();
+            if (mathLevel2Result.wasRecognized)
+            {
+                Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+                if (tokenNameOrDataResult.wasRecognized)
+                {
+                    if (tokenNameOrDataResult.errors == "")
+                    {
+                        string resultVariable = this->getNextTempName();
+                        //define matematical operator name
+                        string mathOperator = mathLevel2Result.result;
+                        if (mathOperator == "*")
+                            mathOperator = "MUL";
+                        else if (mathOperator == "/")
+                            mathOperator = "DIV";
+
+                        this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef3Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
+                        result.result = resultVariable;
+
+                    }
+                    else
+                        result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
+                }
+                else
+                {
+                    result.errors = "second operand of an attribuition with a matematical operation was not recognized";
+                }
+            }
+            else
+            {
+                //a simple attribuition
+                result.result = attribDef3Result.result;
+            }
+        }
+        else
+        {
+            result.errors = "attribDef2 error:\r\n"+attribDef3Result.errors;
+        }
+
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+}
+
+//Grammar: <attribDef3>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+Result Compiler::attribDef3(string insertBefore)
+{
+    Result result;
+    Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+    if (tokenNameOrDataResult.wasRecognized)
+    {
+        // a simple declaration
+        result.wasRecognized = true;
+        result.result = tokenNameOrDataResult.result;
+    }
+    else
+    {
+        Result attribDef3Result = this->attribDef3(insertBefore);
+        if (attribDef3Result.wasRecognized)
+        {
+            result.wasRecognized = true;
+            if (attribDef3Result.errors == "")
+            {
+                //checks by mathLevel1
+                Result mathLevel2Result = this->mathLevel3();
+                if (mathLevel2Result.wasRecognized)
+                {
+                    Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+                    if (tokenNameOrDataResult.wasRecognized)
+                    {
+                        if (tokenNameOrDataResult.errors == "")
+                        {
+                            string resultVariable = this->getNextTempName();
+                            //define matematical operator name
+                            string mathOperator = mathLevel2Result.result;
+                            if (mathOperator == "^")
+                                mathOperator = "POW";
+
+                            this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef3Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
+                            result.result = resultVariable;
+
+                        }
+                        else
+                            result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
+                    }
+                    else
+                    {
+                        result.errors = "second operand of an attribuition with a matematical operation was not recognized";
+                    }
+                }
+                else
+                {
+                    //a simple attribuition
+                    result.result = attribDef3Result.result;
+                }
+            }
+            else
+            {
+                result.errors = "attribDef3 error:\r\n"+attribDef3Result.errors;
+            }
+
+        }
+        else
+        {
+            result.wasRecognized = false;
+        }
+    }
+}
+
+//Grammar: <mathLevel1> -> + | - 
+Result Compiler::mathLevel1(string insertBefore)
+{
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken == "+" || nextToken == "-")
+    {
+        result.wasRecognized = true;
+        result.result = nextToken;
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+//Grammar: <mathLevel1> -> * | /
+Result Compiler::mathLevel2(string insertBefore)
+{
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken == "*" || nextToken == "/")
+    {
+        result.wasRecognized = true;
+        result.result = nextToken;
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+//Grammar: <mathLevel1> -> ^
+Result Compiler::mathLevel2(string insertBefore)
+{
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken == "^")
+    {
+        result.wasRecognized = true;
+        result.result = nextToken;
+    }
+    else
+    {
+        result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+//Grammar: <TokenNameOrData> -> TokenName | number | string
+Result Compiler::tokenNameOrData(string insertBefore)
+{
+    Result result;
+    string nextToken = this->getNextToken();
+    if (nextToken.size() > 0)
+    {
+        result.wasRecognized = true;
+        if (nextToken[0] == '"' || nextToken[0] == '\'' || this->isNumber(nextToken))
+        {
+            //numbers and strings
+            result.result = nextToken
+        }
+        else
+        {
+            //looks for variable definition in the intermediate code
+            bool found = false;
+            for (auto &c: this->intermediateCode)
+            {
+
+                if (c.find("DEFINE") == 0 && c.find(nextToken) == c.size() - nextToken.size())
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                result.result = nextToken;
+            }
+            else
+            {
+                result.errors = "Unknwon token '"+nextToken+"'";
+            }
+
+        }
+    }
+    else
+    {
+        result.wasRecognized = false;
+        this->putBackToken(nextToken);
+    }
+}
+
+bool Compiler::isNumber(string possibleNumber)
+{
+    bool dot = false;
+    string  numbers = "0123456789";
+    
+    for (unsigned c = 0; c < possibleNumber.size(); c++)
+    {
+        if (numbers.find(possibleNumber[c]) == string::npos)
+        {
+            if (c == 0 && possibleNumber[c] != '-' && possibleNumber[c] != '+')
+                return false;
+            else if (possibleNumber[c] == '.')
+            {
+                if (dot)
+                    return false;
+                else
+                    dot = true;
+            }
+        }
+    }
+
+    return true;
 }
 
 #pragma region variable declaration
@@ -426,6 +723,7 @@ Result Compiler::getTokenNameList()
 }
 #pragma endregion
 
+#pragma region blocks of code (while, if, logic and unamed block)
 //Grammar: <while>-> "while" + <blockOfLogic> + <blockOfCode>
 Result Compiler::_while(string insertBefore)
 {
@@ -782,3 +1080,4 @@ Result Compiler::logicOperator(string insertBefore)
     
 }
 
+#pragma endregion
