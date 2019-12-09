@@ -38,6 +38,9 @@ class Compiler{
         Result blockOfCode(string insertBefore);
         Result blockOfLogic(string insertBefore);
         Result parentesisD(string insertBefore);
+        Result logicTokenNameOrData(string insertBefore);
+        Result logicOperator(string insertBefore);
+        Result attribDef(string insertBefore)
         
     public:
         vector<string> validate(vector<string> tokens);

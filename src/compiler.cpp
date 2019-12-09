@@ -194,9 +194,13 @@ void Compiler::insertIntermediateCode(string label, string code, int offset)
 
 string Compiler::getNextTempName()
 {
-
+    return string("ID_"+std::to_string(this->globalCount++));
 }
 
+Result Compiler::attribDef(string insertBefore)
+{
+
+}
 
 #pragma region variable declaration
 //Grammar: <var> -> \n + "var" + <var declaration>
@@ -436,7 +440,7 @@ Result Compiler::_while(string insertBefore)
         string returnLabelName = this->getNextTempName();
         this->insertIntermediateCode(insertBefore, ":"+returnLabelName, -1);
 
-        Result rBlockOfLogic = this->blockOfLogic();
+        Result rBlockOfLogic = this->blockOfLogic(insertBefore);
         //validade the block of logic
         if (rBlockOfLogic.wasRecognized)
         {
@@ -718,3 +722,48 @@ Result Compiler::parentesisD(string insertBefore)
 
     return result;
 }
+
+//Grammar:<logicTokenNameOrData> -> attribDef | blockOfLogic
+Result Compiler::logicTokenNameOrData(string insertBefore)
+{
+    Result result;
+    Result attribDefResult = this->attribDef(insertBefore);
+    if (attribDefResult.wasRecognized)
+    {
+        result.wasRecognized = true;
+        if (attribDefResult.errors == "")
+        {
+            result.result = attribDefResult.result;
+        }
+        else
+        {
+            result.errors = "Error getting logic, token name or const data:\r\n"+attribDefResult.errors;
+        }
+    }
+    else
+    {
+        Result blockOfLogicResult = this->blockOfLogic(insertBefore);
+        if (blockOfLogicResult.wasRecognized)
+        {
+            result.wasRecognized = true;
+            if (blockOfLogicResult == "")
+            {
+                result.result = blockOfLogicResult.result;
+            }
+            else
+            {
+                result.errors = "Error getting logic, token name or const data:\r\n"+blockOfLogicResult.errors;
+            }
+        }
+        else
+            result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+Result Compiler::logicOperator(string insertBefore)
+{
+
+}
+
