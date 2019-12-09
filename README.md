@@ -79,7 +79,7 @@ An example of code that should be interpreted
 ```
 
 
-An example of output
+An example of output (idented and commented)
 ```assembly
     ;int cont, num
     DEFINE INT CONT
@@ -128,7 +128,38 @@ An example of output
         GOTO :TMP_04
         :TMP_03
 
-        :TMP_04
+    :TMP_04
+
+```
+
+An example of output
+```assembly
+DEFINE INT CONT
+DEFINE INT NUM
+DEFINE REAL CONT2
+ATTRIB NUM 0
+:TMP_01
+CHECK_EQUALS CONT 10 TMP_02
+GOTO TMP_03
+:TMP_02
+MATH_POW CONT 2 TMP_05
+MATH_MUL TEMP_05 3.1415 TMP_06
+ATTRIB CONT2 TMP_06
+CHECK_LESSTHAN CONT 5 TEMP_07
+GOTO TMP_08
+:TMP_07
+MATH_SUM NUM CONT2 TMP_10
+ATTRIB NUM TMP_10
+GOTO TMP_09
+:TMP_08
+ATTRIB CONT 0
+:TMP_09
+MATH_SUM CONT 1 TMP_11
+ATTRIB CONT TMP_11
+GOTO TMP_01
+GOTO :TMP_04
+:TMP_03
+:TMP_04
 
 ```
 
