@@ -43,39 +43,39 @@ vector<string> Compiler::validate(vector<string> tokens)
 }
 
 //Grammar: <E1>-> <var> | <E2>
-Result Compiler::EntryPoint()
+bool Compiler::EntryPoint()
 {
-    Result result;
     Result rVar = var();
 
 
-    if (rVar.wasRecognized && result.errors != "")
+    if (rVar.wasRecognized && rVar.errors != "")
     {
-        result.wasRecognized = true;
         //is a valid var declaration, but errors was found
-        result.errors =  "Some errors was found in var declaration: \r\n" <<  result.errors;
+        cout <<  "Some errors was found in var declaration: \r\n" + rVar.errors;
+
+        return false;
 
     }
 
     cout << "Parece que foi" << endl;
 
 
-   /* Result result2 = EntryPoint2();
+    Result result2 = EntryPoint2("");
     if (result2.wasRecognized && result2.errors != "")
     {
         //is a valid block of code, but errors was found
-        cout << result.errors;
+        cout << result2.errors;
 
-        return;
-    }*/
+        return false;
+    }
 
-    cout << "Returned errors: "<< result.errors << endl << endl << endl;
+    cout << "Returned errors: "<< result2.errors << endl << endl << endl;
     cout << endl << endl << " Intermediate code: " << endl;
     for (auto &c: this->intermediateCode)
         cout << "\t" << c << endl;
     cout << endl << endl;
 
-    return result;
+    return true;
     
 }
 
@@ -177,8 +177,9 @@ void Compiler::insertIntermediateCode(string label, string code, int offset)
     {
         //find the label in the code
         int index = this->intermediateCode.size();
-        auto nPos = this->intermediateCode.find(":"+label);
-        if (nPos != this->intermediateCode.end())
+        
+        auto nPos = this->findInIntermediateCode(":"+label);
+        if (nPos != notFound)
             index = nPos + offset;
 
         if (index >= this->intermediateCode.size())
@@ -198,6 +199,16 @@ string Compiler::getNextTempName()
     return string("ID_"+std::to_string(this->globalCount++));
 }
 
+int Compiler::findInIntermediateCode(string search)
+{
+
+    for (int c = 0; c < this->intermediateCode.size(); c++)
+        if (this->intermediateCode[c] == search)
+            return c;
+    
+    return notFound;
+}
+
 #pragma endregion
 
 #pragma region attribuition and matematical operations
@@ -213,7 +224,7 @@ Result Compiler::attribDef(string insertBefore)
         if (attribDef2Result.errors == "")
         {
             //checks by mathLevel1
-            Result mathLevel1Result = this->mathLevel1();
+            Result mathLevel1Result = this->mathLevel1(insertBefore);
             if (mathLevel1Result.wasRecognized)
             {
                 Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
@@ -270,7 +281,7 @@ Result Compiler::attribDef2(string insertBefore)
         if (attribDef3Result.errors == "")
         {
             //checks by mathLevel1
-            Result mathLevel2Result = this->mathLevel2();
+            Result mathLevel2Result = this->mathLevel2(insertBefore);
             if (mathLevel2Result.wasRecognized)
             {
                 Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
@@ -336,7 +347,7 @@ Result Compiler::attribDef3(string insertBefore)
             if (attribDef3Result.errors == "")
             {
                 //checks by mathLevel1
-                Result mathLevel2Result = this->mathLevel3();
+                Result mathLevel2Result = this->mathLevel3(insertBefore);
                 if (mathLevel2Result.wasRecognized)
                 {
                     Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
@@ -418,7 +429,7 @@ Result Compiler::mathLevel2(string insertBefore)
 }
 
 //Grammar: <mathLevel1> -> ^
-Result Compiler::mathLevel2(string insertBefore)
+Result Compiler::mathLevel3(string insertBefore)
 {
     Result result;
     string nextToken = this->getNextToken();
@@ -446,7 +457,7 @@ Result Compiler::tokenNameOrData(string insertBefore)
         if (nextToken[0] == '"' || nextToken[0] == '\'' || this->isNumber(nextToken))
         {
             //numbers and strings
-            result.result = nextToken
+            result.result = nextToken;
         }
         else
         {
@@ -752,9 +763,9 @@ Result Compiler::_while(string insertBefore)
             {
                 //the block of lógic returns a <true label>,<false label>,<exit label>
                 //get the names of true and false label
-                string trueLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string trueLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 rBlockOfLogic.result = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
-                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string falseLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
 
 
@@ -802,7 +813,7 @@ Result Compiler::_if(string insertBefore)
     {
         result.wasRecognized = true;
 
-        Result rBlockOfLogic = this->blockOfLogic();
+        Result rBlockOfLogic = this->blockOfLogic(insertBefore);
         //validade the block of logic
         if (rBlockOfLogic.wasRecognized)
         {
@@ -810,9 +821,9 @@ Result Compiler::_if(string insertBefore)
             {
                 //the block of lógic returns a <true label>,<false label>,<exit label>
                 //get the names of true and false label
-                string trueLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string trueLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 rBlockOfLogic.result = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
-                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string falseLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
 
 

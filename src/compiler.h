@@ -8,6 +8,8 @@
 
 using namespace std;
 
+const int notFound = -1;
+
 class Result{
     public:
         string result = "";
@@ -23,7 +25,7 @@ class Compiler{
         vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
-        Result EntryPoint(string insertBefore);
+        bool EntryPoint();
         Result EntryPoint2(string insertBefore);
         void insertIntermediateCode(string label, string code, int offset);
         string getNextTempName();
@@ -48,6 +50,8 @@ class Compiler{
         Result mathLevel3(string insertBefore);
         Result tokenNameOrData(string insertBefore);
         bool isNumber(string possibleNumber);
+
+        int findInIntermediateCode(string search);
         
     public:
         vector<string> validate(vector<string> tokens);
