@@ -468,7 +468,56 @@ Result Compiler::_while()
 //Grammar: <if>-> <blockOfLogic> + <blockOfCode>
 Result Compiler::_if()
 {
-   
+    Result result;
+    string nextToken = this->getNextToken();
+    //checks if is a valid block
+    if (nextToken == "if")
+    {
+        result.wasRecognized = true;
+
+        Result rBlockOfLogic = this->blockOfLogic();
+        //validade the block of logic
+        if (rBlockOfLogic.wasRecognized)
+        {
+            if (rBlockOfLogic.errors == "")
+            {
+                //the block of lógic returns a <true label>,<false label>,<exit label>
+                //get the names of true and false label
+                string trueLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                rBlockOfLogic.result = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+                string falseLabel = rBlockOfLogic.result.substr(rBlockOfLogic.begin(), rBlockOfLogic.result.find(','));
+                string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+
+
+                //validade block of code
+                Result rBlockOfCode = this->blockOfCode();
+                if (rBlockOfCode.wasRecognized)
+                {
+                    if (rBlockOfCode.errors == "")
+                    {
+                        //just return
+                    }
+                    else
+                        result.errors = "Error in 'block of code' of a 'if' structure:\r\n" + rBlockOfLogic.errors;
+                }
+                else
+                    result.errors = "Missing or invalid 'block of code' of a 'if' structure";
+            }
+            else
+            {
+                result.errors = "Error in 'logic' of a 'if' structure:\r\n" + rBlockOfLogic.errors;
+            }
+        }
+        else
+            result.errors = "Missing or invalid 'logic' of a 'if' structure";
+
+    }
+    else{
+        result.wasRecognized = false;
+        this->putBackToken(nextToken);
+    }
+
+    return result;
 
 }
 

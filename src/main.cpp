@@ -2,12 +2,13 @@
 #include "compiler.h"
 
 /*
-    Planning 
+    Planning "A"
         first day
             [ ] language specification (grammar)
             [x] basic structure
             [ ] code writing planning
-            
+
+    day 11, the plannin was not well executed... a new planning was make, but it was not documented (I'm afraid of Murphy spirt. The planning is just in my mind)
     
 */
 
@@ -15,10 +16,6 @@ using namespace std;
 
 int main()
 {
-    /*S_ = SPECIAL WORD
-    TN_ = TOKEN NAME
-    M_ = SYMBOL
-    C_ = CONST*/
     vector<string> tokens = {
         "var", "\n",
             "\t", "int", "cont", ",", "num", "\n",
@@ -27,6 +24,17 @@ int main()
         "num", "=", "0", "\n",
 
         "while", "(", "cont", "<", "10", ")", "{",
+
+            "cont2", "=", "3.1415", "*", "cont", "^", "2", 
+            "if", "(", "cont", "<", "5", ")","{",
+                "num", "=", "num", "+", "cont2",
+            "}",
+            "else","{",
+                "cont", "=", "0",
+            "}",
+            
+            "cont", "=", "cont", "+", "1",
+        "}"
         
     };
 
