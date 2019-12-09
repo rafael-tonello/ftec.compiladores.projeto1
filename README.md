@@ -51,7 +51,7 @@ folder 'bin'.
     //if block
     [ ] <if>-> <blockOfLogic> + <blockOfCode>
 
-    [ ] <blockOfLogic> -> "(" + <parentesisD> + ")"
+    [■] <blockOfLogic> -> "(" + <parentesisD> + ")"
     [ ] <logicTokenNameOrData> -> attribDef | blockOfLogic
 
     [ ] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 

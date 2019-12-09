@@ -23,9 +23,9 @@ class Compiler{
         vector<string> intermediateCode;
         string getNextToken();
         void putBackToken(string token);
-        Result EntryPoint();
-        Result EntryPoint2();
-        void insertIntermediateCodeAfterLabel(string label, string code, int offset = 0);
+        Result EntryPoint(string insertBefore);
+        Result EntryPoint2(string insertBefore);
+        void insertIntermediateCode(string label, string code, int offset);
         string getNextTempName();
 
         Result var();
@@ -33,10 +33,11 @@ class Compiler{
         Result typeDeclaration(string type);
         Result getTokenNameList();
 
-        Result _while();
-        Result _if();
-        Result blockOfCode();
-        Result blockOfLogic();
+        Result _while(string insertBefore);
+        Result _if(string insertBefore);
+        Result blockOfCode(string insertBefore);
+        Result blockOfLogic(string insertBefore);
+        Result parentesisD(string insertBefore);
         
     public:
         vector<string> validate(vector<string> tokens);
