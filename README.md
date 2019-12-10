@@ -31,7 +31,7 @@ folder 'bin'.
     //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
     [■] <attribDef>-> <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
     [■] <attribDef2>-> <attribDef3> | <attribDef3> + <mathLevel2> + <attribDef>
-    [■] <attribDef3>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+    [■] <attribDef3>-> <TokenNameOrData> + <mathLevel3> + <attribDef2> | <TokenNameOrData>
     [■] <mathLevel1> -> + | - 
     [■] <mathLevel2> -> * | / | 
     [■] <mathLevel3> -> ^

@@ -9,6 +9,7 @@
 using namespace std;
 
 const int notFound = -1;
+const string END = string("___end___of___program___\0");
 
 class Result{
     public:
@@ -23,7 +24,7 @@ class Compiler{
         int globalCount = 0;
         vector<string> tokens;
         vector<string> intermediateCode;
-        string getNextToken();
+        string getNextToken(bool skeepBlanks = false);
         void putBackToken(string token);
         bool EntryPoint();
         Result EntryPoint2(string insertBefore);

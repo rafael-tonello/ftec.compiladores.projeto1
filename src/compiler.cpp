@@ -10,11 +10,25 @@ void debug(string msg)
  * or a number, or a variable name, or a special word, etc.). The compiler will
  * interpret this list of symbols in order from top to bottom. This function is
  * responsible for returning these symbols in the correct order (top to bottom). */
-string Compiler::getNextToken()
+string Compiler::getNextToken(bool skeepBlanks)
 {
-    string ret = this->tokens[0];
-    this->tokens.erase(this->tokens.begin());
-    return ret;
+    
+    if (this->tokens.size() > 0)
+    {
+        string ret = this->tokens[0];
+        this->tokens.erase(this->tokens.begin());
+        while (skeepBlanks && (ret == "\n" || ret == "\t" || ret == " "))
+        {
+            ret = this->tokens[0];
+            this->tokens.erase(this->tokens.begin());
+        }
+
+        
+        return ret;
+
+    }
+    else
+        return END;
 }
 
 void Compiler::putBackToken(string token)
@@ -31,6 +45,7 @@ vector<string> Compiler::validate(vector<string> tokens)
     for (auto &c: tokens)
         this->tokens.push_back(c);
 
+
     if (this->EntryPoint())
     {
         cout << "Apers it work!" << endl;
@@ -45,7 +60,10 @@ vector<string> Compiler::validate(vector<string> tokens)
 //Grammar: <E1>-> <var> | <E2>
 bool Compiler::EntryPoint()
 {
+
+    bool result = true;
     Result rVar = var();
+
 
 
     if (rVar.wasRecognized && rVar.errors != "")
@@ -57,25 +75,35 @@ bool Compiler::EntryPoint()
 
     }
 
-    cout << "Parece que foi" << endl;
 
 
-    Result result2 = EntryPoint2("");
-    if (result2.wasRecognized && result2.errors != "")
+    while (true)
     {
-        //is a valid block of code, but errors was found
-        cout << result2.errors;
+        Result result2 = EntryPoint2("");
+        debug("The system was returned from EntryPoint2 call");
+        if (result2.wasRecognized)
+        {
+            if (result2.errors != "")
+            {
+                //is a valid block of code, but errors was found
+                cout << result2.errors;
 
-        return false;
+                result = false;
+                break;
+            }
+        }
+        else
+            break;
+        
     }
 
-    cout << "Returned errors: "<< result2.errors << endl << endl << endl;
-    cout << endl << endl << " Intermediate code: " << endl;
+    cout << "Intermediate code contains " << to_string(this->intermediateCode.size()) << " lines" << endl;
+    cout  << " Intermediate code: " << endl;
     for (auto &c: this->intermediateCode)
         cout << "\t" << c << endl;
     cout << endl << endl;
 
-    return true;
+    return result;
     
 }
 
@@ -107,6 +135,7 @@ Result Compiler::EntryPoint2(string insertBefore)
             Result rBlockOfCode = this->blockOfCode(insertBefore);
             if (rBlockOfCode.wasRecognized)
             {
+                result.wasRecognized = true;
                 if (rBlockOfCode.errors != "")
                     result.errors = "Error in a 'block of code' definition:\r\n"+rBlockOfCode.errors;
             }
@@ -117,6 +146,7 @@ Result Compiler::EntryPoint2(string insertBefore)
 
                 if (string("\r\r\t ").find(token) == string::npos)
                 {
+                    result.wasRecognized = true;
                     //checks if exista a variable declaration with this token
                     bool found = false;
                     for (auto &c: this->intermediateCode)
@@ -128,11 +158,11 @@ Result Compiler::EntryPoint2(string insertBefore)
                             break;
                         }
                     }
-
+                    
                     if (found)
                     {
-                        string attribCanical = this->getNextToken();
-                        if (attribCanical == "=")
+                        string attribCanonical = this->getNextToken();
+                        if (attribCanonical == "=")
                         {
                             //call attribDef method and get the variable that must be attributed to current token
                             Result rAttribDef = this->attribDef(insertBefore);
@@ -142,7 +172,6 @@ Result Compiler::EntryPoint2(string insertBefore)
                                 {
                                     //insert the attribuition to current toke to intermediate code
                                     this->insertIntermediateCode(insertBefore, "ATTRIB "+ token +" "+rAttribDef.result, -1);
-
                                 }
                                 else
                                 {
@@ -167,6 +196,8 @@ Result Compiler::EntryPoint2(string insertBefore)
             }
         }
     }
+
+    return result;
 }
 
 void Compiler::insertIntermediateCode(string label, string code, int offset)
@@ -242,7 +273,6 @@ Result Compiler::attribDef(string insertBefore)
 
                         this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef2Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
                         result.result = resultVariable;
-
                     }
                     else
                         result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
@@ -262,12 +292,12 @@ Result Compiler::attribDef(string insertBefore)
         {
             result.errors = "attribDef error:\r\n"+attribDef2Result.errors;
         }
-
     }
     else
     {
         result.wasRecognized = false;
     }
+    return result;
 }
 
 //Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
@@ -296,10 +326,8 @@ Result Compiler::attribDef2(string insertBefore)
                             mathOperator = "MUL";
                         else if (mathOperator == "/")
                             mathOperator = "DIV";
-
                         this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef3Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
                         result.result = resultVariable;
-
                     }
                     else
                         result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
@@ -319,15 +347,16 @@ Result Compiler::attribDef2(string insertBefore)
         {
             result.errors = "attribDef2 error:\r\n"+attribDef3Result.errors;
         }
-
     }
     else
     {
         result.wasRecognized = false;
     }
+
+    return result;
 }
 
-//Grammar: <attribDef3>-> <TokenNameOrData> | <attribDef3> + <mathLevel3> + <attribDef2>
+//Grammar: <attribDef3>-> <attribDef3> + <mathLevel3> + <attribDef2> | <TokenNameOrData>
 Result Compiler::attribDef3(string insertBefore)
 {
     Result result;
@@ -336,60 +365,46 @@ Result Compiler::attribDef3(string insertBefore)
     {
         // a simple declaration
         result.wasRecognized = true;
-        result.result = tokenNameOrDataResult.result;
-    }
-    else
-    {
-        Result attribDef3Result = this->attribDef3(insertBefore);
-        if (attribDef3Result.wasRecognized)
+
+        //checks by mathLevel1
+        Result mathLevel2Result = this->mathLevel3(insertBefore);
+        if (mathLevel2Result.wasRecognized)
         {
-            result.wasRecognized = true;
-            if (attribDef3Result.errors == "")
+            Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+            if (tokenNameOrDataResult.wasRecognized)
             {
-                //checks by mathLevel1
-                Result mathLevel2Result = this->mathLevel3(insertBefore);
-                if (mathLevel2Result.wasRecognized)
+                if (tokenNameOrDataResult.errors == "")
                 {
-                    Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
-                    if (tokenNameOrDataResult.wasRecognized)
-                    {
-                        if (tokenNameOrDataResult.errors == "")
-                        {
-                            string resultVariable = this->getNextTempName();
-                            //define matematical operator name
-                            string mathOperator = mathLevel2Result.result;
-                            if (mathOperator == "^")
-                                mathOperator = "POW";
+                    string resultVariable = this->getNextTempName();
+                    //define matematical operator name
+                    string mathOperator = mathLevel2Result.result;
+                    if (mathOperator == "^")
+                        mathOperator = "POW";
 
-                            this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef3Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
-                            result.result = resultVariable;
+                    this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + tokenNameOrDataResult.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
+                    result.result = resultVariable;
 
-                        }
-                        else
-                            result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
-                    }
-                    else
-                    {
-                        result.errors = "second operand of an attribuition with a matematical operation was not recognized";
-                    }
                 }
                 else
-                {
-                    //a simple attribuition
-                    result.result = attribDef3Result.result;
-                }
+                    result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
             }
             else
             {
-                result.errors = "attribDef3 error:\r\n"+attribDef3Result.errors;
+                result.errors = "second operand of an attribuition with a matematical operation was not recognized";
             }
-
         }
         else
         {
-            result.wasRecognized = false;
+            //a simple attribuition
+                result.result = tokenNameOrDataResult.result;
         }
+            
     }
+    else
+    {
+        result.wasRecognized = false;
+    }
+    return result;
 }
 
 //Grammar: <mathLevel1> -> + | - 
@@ -397,6 +412,7 @@ Result Compiler::mathLevel1(string insertBefore)
 {
     Result result;
     string nextToken = this->getNextToken();
+    debug("MathLevel1: found the token "+nextToken);
     if (nextToken == "+" || nextToken == "-")
     {
         result.wasRecognized = true;
@@ -405,6 +421,7 @@ Result Compiler::mathLevel1(string insertBefore)
     else
     {
         result.wasRecognized = false;
+        this->putBackToken(nextToken);
     }
 
     return result;
@@ -423,6 +440,7 @@ Result Compiler::mathLevel2(string insertBefore)
     else
     {
         result.wasRecognized = false;
+        this->putBackToken(nextToken);
     }
 
     return result;
@@ -441,6 +459,7 @@ Result Compiler::mathLevel3(string insertBefore)
     else
     {
         result.wasRecognized = false;
+        this->putBackToken(nextToken);
     }
 
     return result;
@@ -489,6 +508,8 @@ Result Compiler::tokenNameOrData(string insertBefore)
         result.wasRecognized = false;
         this->putBackToken(nextToken);
     }
+
+    return result;
 }
 
 bool Compiler::isNumber(string possibleNumber)
@@ -520,7 +541,7 @@ bool Compiler::isNumber(string possibleNumber)
 //Grammar: <var> -> \n + "var" + <var declaration>
 Result Compiler::var()
 {
-    cout << "DEBUG: enterred on var" << endl;
+
     Result result;
     
 
@@ -530,8 +551,9 @@ Result Compiler::var()
     //chekcks if next token represents a valid variable declaration block
     if (nextToken == "var")
     {  
+        
         result.wasRecognized = true;
-        nextToken = this->getNextToken();
+        nextToken = this->getNextToken(false);
         
         if (nextToken == "\n")
         {
@@ -581,7 +603,7 @@ Result Compiler::varDeclaration()
     Result result;
 
     //get the next tocken from stack
-    string nextToken = this->getNextToken();
+    string nextToken = this->getNextToken(false);
     result.wasRecognized = true;
 
     if (nextToken == "\t")
@@ -590,10 +612,13 @@ Result Compiler::varDeclaration()
         nextToken = this->getNextToken();
         if (nextToken == "int") 
         {
+
             //a int declaration
             Result result2 = this->typeDeclaration("INT");
             if (result2.wasRecognized && result2.errors != "")
                 result.errors = "Error in int declaration:\r\n"+result2.errors;
+
+
         }
         else if (nextToken == "real")
         {
@@ -610,7 +635,8 @@ Result Compiler::varDeclaration()
         }
 
     }
-    else /*/if (nextToken == "\n")*/{
+    else /*/if (nextToken == "\n")*/
+    {
         //var exit condition
         result.wasRecognized = false;
         result.errors = "";
@@ -642,12 +668,9 @@ Result Compiler::typeDeclaration(string type)
     Result rTokenList = this->getTokenNameList();
     if (!rTokenList.wasRecognized || rTokenList.errors == "")
     {
-        auto tk = this -> getNextToken();
+        auto tk = this -> getNextToken(false);
         if (tk == "\n")
         {
-            
-            
-            debug ("Received the var list: "+rTokenList.result);
             rTokenList.result = rTokenList.result + ",";
             //add received names to variables list or intermiate code
             while (rTokenList.result.find(',') != string::npos)
@@ -657,7 +680,6 @@ Result Compiler::typeDeclaration(string type)
 
                 //check in the intermediate code if the variable is not defined yet
                 bool found = false;
-                debug("Parsing the varname " + nextVarName);
                 for (auto &c: this->intermediateCode)
                 {
 
@@ -674,8 +696,6 @@ Result Compiler::typeDeclaration(string type)
                     result.errors  = "Duplicate variable "+nextVarName;
                     return result;
                 }
-
-                debug ("Insert define of "+nextVarName+":"+type+" in the intermediate code");
 
                 this->intermediateCode.push_back("DEFINE "+type + " "+nextVarName);
             }
@@ -707,7 +727,7 @@ Result Compiler::getTokenNameList()
 
     result.result = nextName;
     //check if token list is done
-    string nextToken = this->getNextToken();
+    string nextToken = this->getNextToken(false);
 
     if (nextToken == ",")
     {
@@ -745,7 +765,8 @@ Result Compiler::getTokenNameList()
 Result Compiler::_while(string insertBefore)
 {
     Result result;
-    string nextToken = this->getNextToken();
+    string nextToken = this->getNextToken(true);
+    
     //checks if is a valid block
     if (nextToken == "while")
     {
@@ -759,8 +780,10 @@ Result Compiler::_while(string insertBefore)
         //validade the block of logic
         if (rBlockOfLogic.wasRecognized)
         {
+            debug("while 4");
             if (rBlockOfLogic.errors == "")
             {
+                debug("while 5");
                 //the block of lógic returns a <true label>,<false label>,<exit label>
                 //get the names of true and false label
                 string trueLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
@@ -768,36 +791,45 @@ Result Compiler::_while(string insertBefore)
                 string falseLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
 
-
+                debug("while 6");
                 //validade block of code
                 Result rBlockOfCode = this->blockOfCode(falseLabel);
                 if (rBlockOfCode.wasRecognized)
                 {
+                    debug("while 7");
                     if (rBlockOfCode.errors == "")
                     {
+                        debug("while 8");
                         //add the while loopback to intermediate code (the code must be after the 'exitLabel')
                         //this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, -1);
                         this->insertIntermediateCode(exitLabel, "GOTO "+returnLabelName, 1);
-
+                        debug("while 9");
                     }
                     else
                         result.errors = "Error in 'block of code' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
+                    debug("while 10");
                 }
                 else
                     result.errors = "Missing or invalid 'block of code' of a 'while' structure";
+                debug("while 11");
             }
             else
             {
                 result.errors = "Error in 'logic' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
             }
+            debug("while 12");
         }
         else
             result.errors = "Missing or invalid 'logic' of a 'while' structure";
+        debug("while 13");
 
     }
     else{
+        debug("while 14");
         result.wasRecognized = false;
+        debug("will put back the token "+nextToken + ". (the current next token is "+this->tokens[0]+")");
         this->putBackToken(nextToken);
+        debug("while 16");
     }
 
     return result;
@@ -863,7 +895,7 @@ Result Compiler::_if(string insertBefore)
 Result Compiler::blockOfCode(string insertBefore)
 {
     Result result;
-    string openKeysToken = this->getNextToken();
+    string openKeysToken = this->getNextToken(true);
     if (openKeysToken == "{")
     {
         result.wasRecognized = true;
@@ -904,6 +936,21 @@ Result Compiler::blockOfLogic(string insertBefore)
             {
                 result.errors = "Error in block of logic:\r\n"+parantesisDResult.errors;
             }
+            else
+            {
+                string rCloseKey = this->getNextToken();
+                if (rCloseKey == ")")
+                {
+
+                }
+                else
+                {
+                    result.errors = "Expected ')' but '"+rCloseKey+"' found";
+                }
+                
+                
+            }
+            
         }
         else
         {
@@ -920,119 +967,100 @@ Result Compiler::blockOfLogic(string insertBefore)
 }
 
 
-//Grammaer: <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
+//Grammaer: <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData>  | <blockOfLogic>
 Result Compiler::parentesisD(string insertBefore)
 {
     Result result;
     result.wasRecognized = false;
     //first sequence
-    Result parentesisDResult = this->parentesisD(insertBefore);
-    if (parentesisDResult.wasRecognized)
+    Result firstLogicOperator = this->logicTokenNameOrData(insertBefore);
+    if (firstLogicOperator.wasRecognized)
     {
         result.wasRecognized = true;
-        if (parentesisDResult.errors == "")
+        if (firstLogicOperator.errors == "")
         {
-            Result logicBlockResult = this->blockOfLogic(insertBefore);
-            if (logicBlockResult.wasRecognized)
+            //get the logic operator
+            Result logicOperator = this->logicOperator(insertBefore);
+            if (logicOperator.wasRecognized)
             {
-                if (logicBlockResult.errors == "")
-                {
-                    //just return
-                }
-                else
-                {
-                    result.errors = "Invalid block of logic:\r\n"+logicBlockResult.errors;
-                }
-            }
-            else
-            {
-                result.errors = "Unrecognized block of logic";
-            }
 
-        }
-        else
-        {
-            result.errors = "Error in nesting of parentesis:\r\n"+parentesisDResult.errors;
-        }
-        
-    }
-    else
-    {
-        Result firstLogicOperator = this->logicTokenNameOrData(insertBefore);
-        if (firstLogicOperator.wasRecognized)
-        {
-            result.wasRecognized = true;
-            if (firstLogicOperator.errors == "")
-            {
-                //get the logic operator
-                Result logicOperator = this->logicOperator(insertBefore);
-                if (logicOperator.wasRecognized)
+                //get the second operator
+                Result secondOperator = this->logicTokenNameOrData(insertBefore);
+                if (secondOperator.wasRecognized)
                 {
 
-                    //get the second operator
-                    Result secondOperator = this->logicTokenNameOrData(insertBefore);
-                    if (secondOperator.wasRecognized)
+                    if (secondOperator.errors == "")
                     {
+                        //add the operation to the intermediate code
+                        //define the logic operation name
+                        string operation = "NOP";
+                        if (logicOperator.result == "==")
+                            operation = "CHECK_EQUALS";
+                        else if (logicOperator.result == ">")
+                            operation = "CHECK_BIGGERTHAN";
+                        else if (logicOperator.result == ">=")
+                            operation = "CHECK_BIGGEOREQUALS";
+                        else if (logicOperator.result == "<")
+                            operation = "CHECK_LESSTHAN";
+                        else if (logicOperator.result == "<=")
+                            operation = "CHECK_LESSOREQUALS";
+                        else if (logicOperator.result == "!=")
+                            operation = "CHECK_DIFFERENT";
 
-                        if (secondOperator.errors != "")
-                        {
-                            //add the operation to the intermediate code
-                            //define the logic operation name
-                            string operation = "NOP";
-                            if (logicOperator.result == "==")
-                                operation = "CHECK_EQUALS";
-                            else if (logicOperator.result == ">")
-                                operation = "CHECK_BIGGERTHAN";
-                            else if (logicOperator.result == ">=")
-                                operation = "CHECK_BIGGEOREQUALS";
-                            else if (logicOperator.result == "<")
-                                operation = "CHECK_LESSTHAN";
-                            else if (logicOperator.result == "<=")
-                                operation = "CHECK_LESSOREQUALS";
-                            else if (logicOperator.result == "!=")
-                                operation = "CHECK_DIFFERENT";
+                        string trueLabelName = this->getNextTempName();
+                        string falseLabelName = this->getNextTempName();
+                        string exitLabelName = this->getNextTempName();
 
-                            string trueLabelName = this->getNextTempName();
-                            string falseLabelName = this->getNextTempName();
-                            string exitLabelName = this->getNextTempName();
+                        this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ": "+trueLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ": "+falseLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ": "+exitLabelName, -1);
 
-                            this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, -1);
-                            this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, -1);
-                            this->insertIntermediateCode(insertBefore, ": "+trueLabelName, -1);
-                            this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, -1);
-                            this->insertIntermediateCode(insertBefore, ": "+falseLabelName, -1);
-                            this->insertIntermediateCode(insertBefore, ": "+exitLabelName, -1);
-
-                            result.result = trueLabelName + "," + falseLabelName+","+exitLabelName;
-                        }
-                        else
-                        {
-                            result.errors = "Error in the second logic operand of a block of logic:\r\n"+secondOperator.errors;
-                        }
+                        result.result = trueLabelName + "," + falseLabelName+","+exitLabelName;
                     }
                     else
                     {
-                        result.errors = "The second logic operand of a block of logic was not recognized";
+                        result.errors = "Error in the second logic operand of a block of logic:\r\n"+secondOperator.errors;
                     }
-
                 }
                 else
                 {
-                    result.errors = "logic comparer of a block of logic was not recognized";
-
+                    result.errors = "The second logic operand of a block of logic was not recognized";
                 }
+
             }
             else
             {
-                result.errors = "Error in the first logic operand of a block of logic:\r\n"+firstLogicOperator.errors;
+                result.errors = "logic comparer of a block of logic was not recognized";
 
             }
         }
         else
         {
-            //not recognized sequence, just return
-        }
+            result.errors = "Error in the first logic operand of a block of logic:\r\n"+firstLogicOperator.errors;
 
+        }
+    }
+    else
+    {
+        Result logicBlockResult = this->blockOfLogic(insertBefore);
+        if (logicBlockResult.wasRecognized)
+        {
+            if (logicBlockResult.errors == "")
+            {
+                //just return
+            }
+            else
+            {
+                result.errors = "Invalid block of logic:\r\n"+logicBlockResult.errors;
+            }
+        }
+        else
+        {
+            result.errors = "Unrecognized block of logic";
+        }
     }
 
     return result;
@@ -1094,6 +1122,8 @@ Result Compiler::logicOperator(string insertBefore)
         result.wasRecognized = false;
         this->putBackToken(nextToken);
     }
+
+    return result;
     
 }
 
