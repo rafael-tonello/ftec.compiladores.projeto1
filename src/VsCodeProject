@@ -1,0 +1,110 @@
+result.wasRecognized = false;
+    //first sequence
+    Result logicTokenNameOrDataResult = this->logicTokenNameOrData(insertBefore);
+    if (logicTokenNameOrDataResult.wasRecognized)
+    {
+        result.wasRecognized = true;
+        if (parentesisDResult.errors == "")
+        {
+            Result logicBlockResult = this->blockOfLogic(insertBefore);
+            if (logicBlockResult.wasRecognized)
+            {
+                if (logicBlockResult.errors == "")
+                {
+                    //just return
+                }
+                else
+                {
+                    result.errors = "Invalid block of logic:\r\n"+logicBlockResult.errors;
+                }
+            }
+            else
+            {
+                result.errors = "Unrecognized block of logic";
+            }
+
+        }
+        else
+        {
+            result.errors = "Error in nesting of parentesis:\r\n"+parentesisDResult.errors;
+        }
+        
+    }
+    else
+    {
+        Result firstLogicOperator = this->logicTokenNameOrData(insertBefore);
+        if (firstLogicOperator.wasRecognized)
+        {
+            result.wasRecognized = true;
+            if (firstLogicOperator.errors == "")
+            {
+                //get the logic operator
+                Result logicOperator = this->logicOperator(insertBefore);
+                if (logicOperator.wasRecognized)
+                {
+
+                    //get the second operator
+                    Result secondOperator = this->logicTokenNameOrData(insertBefore);
+                    if (secondOperator.wasRecognized)
+                    {
+
+                        if (secondOperator.errors != "")
+                        {
+                            //add the operation to the intermediate code
+                            //define the logic operation name
+                            string operation = "NOP";
+                            if (logicOperator.result == "==")
+                                operation = "CHECK_EQUALS";
+                            else if (logicOperator.result == ">")
+                                operation = "CHECK_BIGGERTHAN";
+                            else if (logicOperator.result == ">=")
+                                operation = "CHECK_BIGGEOREQUALS";
+                            else if (logicOperator.result == "<")
+                                operation = "CHECK_LESSTHAN";
+                            else if (logicOperator.result == "<=")
+                                operation = "CHECK_LESSOREQUALS";
+                            else if (logicOperator.result == "!=")
+                                operation = "CHECK_DIFFERENT";
+
+                            string trueLabelName = this->getNextTempName();
+                            string falseLabelName = this->getNextTempName();
+                            string exitLabelName = this->getNextTempName();
+
+                            this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, -1);
+                            this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, -1);
+                            this->insertIntermediateCode(insertBefore, ": "+trueLabelName, -1);
+                            this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, -1);
+                            this->insertIntermediateCode(insertBefore, ": "+falseLabelName, -1);
+                            this->insertIntermediateCode(insertBefore, ": "+exitLabelName, -1);
+
+                            result.result = trueLabelName + "," + falseLabelName+","+exitLabelName;
+                        }
+                        else
+                        {
+                            result.errors = "Error in the second logic operand of a block of logic:\r\n"+secondOperator.errors;
+                        }
+                    }
+                    else
+                    {
+                        result.errors = "The second logic operand of a block of logic was not recognized";
+                    }
+
+                }
+                else
+                {
+                    result.errors = "logic comparer of a block of logic was not recognized";
+
+                }
+            }
+            else
+            {
+                result.errors = "Error in the first logic operand of a block of logic:\r\n"+firstLogicOperator.errors;
+
+            }
+        }
+        else
+        {
+            //not recognized sequence, just return
+        }
+
+    }

@@ -214,12 +214,11 @@ void Compiler::insertIntermediateCode(string label, string code, int offset)
             index = nPos + offset;
 
         if (index >= this->intermediateCode.size())
-            index = this->intermediateCode.size() -1;
-        
-        if (index < 0)
-            index = 0;
-
-        this->intermediateCode.insert(this->intermediateCode.begin() + index, code);
+            this->intermediateCode.push_back(code);        
+        else if (index <= 0)
+            this->intermediateCode.insert(this->intermediateCode.begin(), code);
+        else
+            this->intermediateCode.insert(this->intermediateCode.begin() + index, code);
 
     }
 
@@ -244,7 +243,7 @@ int Compiler::findInIntermediateCode(string search)
 
 #pragma region attribuition and matematical operations
 
-//Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+//Grammar: <attribDef2> | <TokenNameOrData>  + <mathLevel1> + <attribDef2>
 Result Compiler::attribDef(string insertBefore)
 {
     Result result;
@@ -258,7 +257,7 @@ Result Compiler::attribDef(string insertBefore)
             Result mathLevel1Result = this->mathLevel1(insertBefore);
             if (mathLevel1Result.wasRecognized)
             {
-                Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+                Result tokenNameOrDataResult = this->attribDef2(insertBefore);
                 if (tokenNameOrDataResult.wasRecognized)
                 {
                     if (tokenNameOrDataResult.errors == "")
@@ -300,7 +299,7 @@ Result Compiler::attribDef(string insertBefore)
     return result;
 }
 
-//Grammar: <attribDef2> | <attribDef2> + <mathLevel1> + <TokenNameOrData>
+//Grammar: <attribDef> + <mathLevel2> + <attribDef3> | <attribDef3>
 Result Compiler::attribDef2(string insertBefore)
 {
     Result result;
@@ -314,7 +313,7 @@ Result Compiler::attribDef2(string insertBefore)
             Result mathLevel2Result = this->mathLevel2(insertBefore);
             if (mathLevel2Result.wasRecognized)
             {
-                Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+                Result tokenNameOrDataResult = this->attribDef3(insertBefore);
                 if (tokenNameOrDataResult.wasRecognized)
                 {
                     if (tokenNameOrDataResult.errors == "")
@@ -356,7 +355,7 @@ Result Compiler::attribDef2(string insertBefore)
     return result;
 }
 
-//Grammar: <attribDef3>-> <attribDef3> + <mathLevel3> + <attribDef2> | <TokenNameOrData>
+//Grammar: <TokenNameOrData> + <mathLevel3> + <attribDef1> | <TokenNameOrData>
 Result Compiler::attribDef3(string insertBefore)
 {
     Result result;
@@ -370,7 +369,7 @@ Result Compiler::attribDef3(string insertBefore)
         Result mathLevel2Result = this->mathLevel3(insertBefore);
         if (mathLevel2Result.wasRecognized)
         {
-            Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
+            Result tokenNameOrDataResult = this->attribDef2(insertBefore);
             if (tokenNameOrDataResult.wasRecognized)
             {
                 if (tokenNameOrDataResult.errors == "")
@@ -780,56 +779,48 @@ Result Compiler::_while(string insertBefore)
         //validade the block of logic
         if (rBlockOfLogic.wasRecognized)
         {
-            debug("while 4");
             if (rBlockOfLogic.errors == "")
             {
-                debug("while 5");
                 //the block of lógic returns a <true label>,<false label>,<exit label>
                 //get the names of true and false label
                 string trueLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 rBlockOfLogic.result = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
                 string falseLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
+                
+                string whileExitLabel = this->getNextTempName();
+                this->insertIntermediateCode(exitLabel, ":"+whileExitLabel, 1);
+                this->insertIntermediateCode(falseLabel, "GOTO "+whileExitLabel, 1);
 
-                debug("while 6");
                 //validade block of code
                 Result rBlockOfCode = this->blockOfCode(falseLabel);
                 if (rBlockOfCode.wasRecognized)
                 {
-                    debug("while 7");
                     if (rBlockOfCode.errors == "")
                     {
-                        debug("while 8");
                         //add the while loopback to intermediate code (the code must be after the 'exitLabel')
                         //this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, -1);
-                        this->insertIntermediateCode(exitLabel, "GOTO "+returnLabelName, 1);
-                        debug("while 9");
+                        this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, -1);
+
                     }
                     else
                         result.errors = "Error in 'block of code' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
-                    debug("while 10");
                 }
                 else
                     result.errors = "Missing or invalid 'block of code' of a 'while' structure";
-                debug("while 11");
             }
             else
             {
                 result.errors = "Error in 'logic' of a 'while' structure:\r\n" + rBlockOfLogic.errors;
             }
-            debug("while 12");
         }
         else
             result.errors = "Missing or invalid 'logic' of a 'while' structure";
-        debug("while 13");
-
     }
     else{
-        debug("while 14");
         result.wasRecognized = false;
         debug("will put back the token "+nextToken + ". (the current next token is "+this->tokens[0]+")");
         this->putBackToken(nextToken);
-        debug("while 16");
     }
 
     return result;
@@ -929,18 +920,19 @@ Result Compiler::blockOfLogic(string insertBefore)
     if (openParentesisToken == "(")
     {
         result.wasRecognized = true;
-        Result parantesisDResult = this->parentesisD(insertBefore);
-        if (parantesisDResult.wasRecognized)
+        Result parentesisDResult = this->parentesisD(insertBefore);
+        if (parentesisDResult.wasRecognized)
         {
-            if (parantesisDResult.errors != "")
+            if (parentesisDResult.errors != "")
             {
-                result.errors = "Error in block of logic:\r\n"+parantesisDResult.errors;
+                result.errors = "Error in block of logic:\r\n"+parentesisDResult.errors;
             }
             else
             {
                 string rCloseKey = this->getNextToken();
                 if (rCloseKey == ")")
                 {
+                    result.result = parentesisDResult.result;
 
                 }
                 else
@@ -1013,10 +1005,10 @@ Result Compiler::parentesisD(string insertBefore)
 
                         this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, -1);
                         this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ": "+trueLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ":"+trueLabelName, -1);
                         this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ": "+falseLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ": "+exitLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ":"+falseLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, ":"+exitLabelName, -1);
 
                         result.result = trueLabelName + "," + falseLabelName+","+exitLabelName;
                     }
