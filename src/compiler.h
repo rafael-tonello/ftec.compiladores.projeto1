@@ -44,11 +44,11 @@ class Compiler{
         Result logicTokenNameOrData(string insertBefore);
         Result logicOperator(string insertBefore);
         Result attribDef(string insertBefore);
-        Result attribDef2(string insertBefore);
-        Result attribDef3(string insertBefore);
-        Result mathLevel1(string insertBefore);
-        Result mathLevel2(string insertBefore);
-        Result mathLevel3(string insertBefore);
+
+        Result m1(string insertBefore);
+        Result m2(string insertBefore);
+        Result m3(string insertBefore);
+        Result m4(string insertBefore);
         Result tokenNameOrData(string insertBefore);
         bool isNumber(string possibleNumber);
 

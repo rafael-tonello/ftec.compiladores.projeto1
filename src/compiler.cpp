@@ -243,226 +243,285 @@ int Compiler::findInIntermediateCode(string search)
 
 #pragma region attribuition and matematical operations
 
-//Grammar: <attribDef2> | <TokenNameOrData>  + <mathLevel1> + <attribDef2>
+//grammar-> <attribDef> -> string | <m1>
 Result Compiler::attribDef(string insertBefore)
 {
     Result result;
-    Result attribDef2Result = this->attribDef2(insertBefore);
-    if (attribDef2Result.wasRecognized)
+    //checks if nextToken is a string
+    string nextToken = this->getNextToken();
+    if (nextToken.find("\"") != string::npos)
+    {
+        //return  the string
+        result.wasRecognized = true;
+        result.result = nextToken;
+    }
+    else
+    {
+        this->putBackToken(nextToken);
+
+        Result m1Result = this->m1(insertBefore);
+        if (m1Result.wasRecognized)
+        {
+            result.wasRecognized = true;
+            result.result = m1Result.result;
+            result.errors = m1Result.errors;
+        }
+        else
+            result.wasRecognized = false;
+    }
+
+    return result;
+}
+
+/* Grammar: <m1> -> <m2> + ('+' | '-') + <m2> + '^' <m1> | 
+                    <m2> + ('+' | '-') <m2> + ('+'|'-')> <m1> |
+                    <m2> + ('+'|'-') <m2> |
+                    <m2>
+*/
+Result Compiler::m1(string insertBefore)
+{
+    Result result;
+    Result firstM2Result = this->m2(insertBefore);
+    if (firstM2Result.wasRecognized)
     {
         result.wasRecognized = true;
-        if (attribDef2Result.errors == "")
+        string nextToken = this->getNextToken();
+        if (nextToken == "+" || nextToken == "-")
         {
-            //checks by mathLevel1
-            Result mathLevel1Result = this->mathLevel1(insertBefore);
-            if (mathLevel1Result.wasRecognized)
-            {
-                Result tokenNameOrDataResult = this->attribDef2(insertBefore);
-                if (tokenNameOrDataResult.wasRecognized)
+            string op = nextToken == "+"? "MATH_SUM": "MATH_SUB";
+            Result secondM2Result = this->m2(insertBefore);
+            if (secondM2Result.wasRecognized)
+            {   
+                string tempDataResult = this->getNextTempName();
+                string nextToken = this->getNextToken();
+                if (nextToken == "^")
                 {
-                    if (tokenNameOrDataResult.errors == "")
-                    {
-                        string resultVariable = this->getNextTempName();
-                        //define matematical operator name
-                        string mathOperator = mathLevel1Result.result;
-                        if (mathOperator == "+")
-                            mathOperator = "SUM";
-                        else if (mathOperator == "-")
-                            mathOperator = "SUB";
-
-                        this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef2Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
-                        result.result = resultVariable;
+                    Result thirdResult = this->m1(insertBefore);
+                    if (thirdResult.wasRecognized){
+                        this->insertIntermediateCode(insertBefore, "MATH_POW "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
                     }
                     else
-                        result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
-                }
-                else
-                {
-                    result.errors = "second operand of an attribuition with a matematical operation was not recognized";
-                }
-            }
-            else
-            {
-                //a simple attribuition
-                result.result = attribDef2Result.result;
-            }
-        }
-        else
-        {
-            result.errors = "attribDef error:\r\n"+attribDef2Result.errors;
-        }
-    }
-    else
-    {
-        result.wasRecognized = false;
-    }
-    return result;
-}
-
-//Grammar: <attribDef> + <mathLevel2> + <attribDef3> | <attribDef3>
-Result Compiler::attribDef2(string insertBefore)
-{
-    Result result;
-    Result attribDef3Result = this->attribDef3(insertBefore);
-    if (attribDef3Result.wasRecognized)
-    {
-        result.wasRecognized = true;
-        if (attribDef3Result.errors == "")
-        {
-            //checks by mathLevel1
-            Result mathLevel2Result = this->mathLevel2(insertBefore);
-            if (mathLevel2Result.wasRecognized)
-            {
-                Result tokenNameOrDataResult = this->attribDef3(insertBefore);
-                if (tokenNameOrDataResult.wasRecognized)
-                {
-                    if (tokenNameOrDataResult.errors == "")
                     {
-                        string resultVariable = this->getNextTempName();
-                        //define matematical operator name
-                        string mathOperator = mathLevel2Result.result;
-                        if (mathOperator == "*")
-                            mathOperator = "MUL";
-                        else if (mathOperator == "/")
-                            mathOperator = "DIV";
-                        this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + attribDef3Result.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
-                        result.result = resultVariable;
+                        //the third operand was not recognized
+                        result.errors = "A matematical operand was not recognized";
+                    }
+                    
+
+                }
+                else if (nextToken == "+" || nextToken == "-")
+                {
+                    Result thirdResult = this->m1(insertBefore);
+                    if (thirdResult.wasRecognized)
+                    {
+                        string op2 = nextToken == "+"? "MATH_SUM": "MATH_RESULT";
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
                     }
                     else
-                        result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
+                    {
+                        //the third operand was not recognized
+                        result.errors = "A matematical operand was not recognized";
+                    }
                 }
                 else
-                {
-                    result.errors = "second operand of an attribuition with a matematical operation was not recognized";
+                {   
+                    this->putBackToken(nextToken);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + secondM2Result.result + " " +tempDataResult + " ", -1);
                 }
+                result.result = tempDataResult;
+                
             }
             else
             {
-                //a simple attribuition
-                result.result = attribDef3Result.result;
+                //the second operand was not recognized
+                result.errors = "A matematical operand was not recognized";
             }
         }
         else
         {
-            result.errors = "attribDef2 error:\r\n"+attribDef3Result.errors;
+            this->putBackToken(nextToken);
+            result.errors = firstM2Result.errors;
+            result.result = firstM2Result.result;
         }
     }
     else
     {
         result.wasRecognized = false;
+        result.errors = firstM2Result.errors;
     }
 
     return result;
 }
 
-//Grammar: <TokenNameOrData> + <mathLevel3> + <attribDef1> | <TokenNameOrData>
-Result Compiler::attribDef3(string insertBefore)
+
+/* Grammar: <m2> -> <m3> + ('*'|'/') <m3> + ('*'|'/') <m1> |
+                    <m3> + ('*'|'/') <m3> |
+                    <m3> */
+Result Compiler::m2(string insertBefore)
 {
     Result result;
-    Result tokenNameOrDataResult = this->tokenNameOrData(insertBefore);
-    if (tokenNameOrDataResult.wasRecognized)
+    Result firstResult = this->m3(insertBefore);
+    if (firstResult.wasRecognized)
     {
-        // a simple declaration
         result.wasRecognized = true;
-
-        //checks by mathLevel1
-        Result mathLevel2Result = this->mathLevel3(insertBefore);
-        if (mathLevel2Result.wasRecognized)
+        string nextToken = this->getNextToken();
+        if (nextToken == "*" || nextToken == "/")
         {
-            Result tokenNameOrDataResult = this->attribDef2(insertBefore);
-            if (tokenNameOrDataResult.wasRecognized)
-            {
-                if (tokenNameOrDataResult.errors == "")
+            string op = nextToken == "*"? "MATH_MUL": "MATH_DIV";
+            Result secondResult = this->m3(insertBefore);
+            if (secondResult.wasRecognized)
+            {   
+                string tempDataResult = this->getNextTempName();
+                string nextToken = this->getNextToken();
+                if (nextToken == "*" || nextToken == "/")
                 {
-                    string resultVariable = this->getNextTempName();
-                    //define matematical operator name
-                    string mathOperator = mathLevel2Result.result;
-                    if (mathOperator == "^")
-                        mathOperator = "POW";
-
-                    this->insertIntermediateCode(insertBefore, "MATH_"+mathOperator + " " + tokenNameOrDataResult.result + " " + tokenNameOrDataResult.result + " " + resultVariable, -1);
-                    result.result = resultVariable;
-
+                    Result thirdResult = this->m1(insertBefore);
+                    if (thirdResult.wasRecognized)
+                    {
+                        string op2 = nextToken == "*"? "MATH_MUL": "MATH_DIV";
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                    }
+                    else
+                    {
+                        //the third operand was not recognized
+                        result.errors = "A matematical operand was not recognized";
+                    }
                 }
                 else
-                    result.errors = "Error in second operand of an attribuition with a matematical operation:\r\n"+tokenNameOrDataResult.errors;
+                {   
+                    this->putBackToken(nextToken);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", -1);
+                }
+                result.result = tempDataResult;
+                
             }
             else
             {
-                result.errors = "second operand of an attribuition with a matematical operation was not recognized";
+                //the second operand was not recognized
+                result.errors = "A matematical operand was not recognized";
             }
         }
         else
         {
-            //a simple attribuition
-                result.result = tokenNameOrDataResult.result;
+            this->putBackToken(nextToken);
+            result.errors = firstResult.errors;
+            result.result = firstResult.result; 
         }
-            
     }
     else
     {
         result.wasRecognized = false;
+        result.errors = firstResult.errors;
     }
+
     return result;
 }
 
-//Grammar: <mathLevel1> -> + | - 
-Result Compiler::mathLevel1(string insertBefore)
+
+/* Grammar: <m3> -> <m4> + '^' + <m4> |
+                    <m4> + '^' + <m4> +'^' + <m1> |
+                    <m4>*/
+
+Result Compiler::m3(string insertBefore)
+{
+    Result result;
+    Result firstResult = this->m4(insertBefore);
+    if (firstResult.wasRecognized)
+    {
+        result.wasRecognized = true;
+        string nextToken = this->getNextToken();
+        if (nextToken == "^")
+        {
+            string op = "MATH_POW";
+            Result secondResult = this->m4(insertBefore);
+            if (secondResult.wasRecognized)
+            {   
+                string tempDataResult = this->getNextTempName();
+                string nextToken = this->getNextToken();
+                if (nextToken == "^")
+                {
+                    Result thirdResult = this->m1(insertBefore);
+                    if (thirdResult.wasRecognized)
+                    {
+                        string op2 = "MATH_POW";
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                    }
+                    else
+                    {
+                        //the third operand was not recognized
+                        result.errors = "A matematical operand was not recognized";
+                    }
+                }
+                else
+                {   
+                    this->putBackToken(nextToken);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", -1);
+                }
+                result.result = tempDataResult;
+                
+            }
+            else
+            {
+                //the second operand was not recognized
+                result.errors = "A matematical operand was not recognized";
+            }
+        }
+        else
+        {
+            this->putBackToken(nextToken);
+            result.errors = firstResult.errors;
+            result.result = firstResult.result;
+        }
+    }
+    else
+    {
+        result.wasRecognized = false;
+        result.errors = firstResult.errors;
+    }
+
+    return result;
+}
+
+//Grammar: <m4> -> "(" + <m1> +")" | <TokenNameOrData>
+Result Compiler::m4(string insertBefore)
 {
     Result result;
     string nextToken = this->getNextToken();
-    debug("MathLevel1: found the token "+nextToken);
-    if (nextToken == "+" || nextToken == "-")
+    if (nextToken == "(")
     {
         result.wasRecognized = true;
-        result.result = nextToken;
+        Result resultM1 = this->m1(insertBefore);
+        if (resultM1.wasRecognized)
+        {
+            string canonicalCloseParentesis = this->getNextToken();
+            if (canonicalCloseParentesis == ")")
+            {
+                result.result = resultM1.result;
+            }
+            else
+            {
+                result.errors = "Extepected ')' but '"+canonicalCloseParentesis+"' found.";
+            }
+        }
+        else
+        {
+            result.errors = "Matematical expression or token name or data was not recognized between parentesis";
+        }
     }
     else
     {
-        result.wasRecognized = false;
         this->putBackToken(nextToken);
+        result = this->tokenNameOrData(insertBefore);
     }
 
     return result;
 }
 
-//Grammar: <mathLevel1> -> * | /
-Result Compiler::mathLevel2(string insertBefore)
-{
-    Result result;
-    string nextToken = this->getNextToken();
-    if (nextToken == "*" || nextToken == "/")
-    {
-        result.wasRecognized = true;
-        result.result = nextToken;
-    }
-    else
-    {
-        result.wasRecognized = false;
-        this->putBackToken(nextToken);
-    }
 
-    return result;
-}
 
-//Grammar: <mathLevel1> -> ^
-Result Compiler::mathLevel3(string insertBefore)
-{
-    Result result;
-    string nextToken = this->getNextToken();
-    if (nextToken == "^")
-    {
-        result.wasRecognized = true;
-        result.result = nextToken;
-    }
-    else
-    {
-        result.wasRecognized = false;
-        this->putBackToken(nextToken);
-    }
-
-    return result;
-}
 
 //Grammar: <TokenNameOrData> -> TokenName | number | string
 Result Compiler::tokenNameOrData(string insertBefore)

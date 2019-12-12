@@ -29,18 +29,23 @@ folder 'bin'.
     [■] <E2> -> <while> | <if> | <blockOfCode> | TokenName + "=" +<attribDef> | {exit}
     //<attribDef>-> <attribDef2> | <attribDef2> + ("+"|"-") + <TokenNameOrData>
     //<attribDef2>-> <TokenNameOrData> | <attribDef2> + ("*"|"/") + <attribDef2>
-    <attribDef> -> <mathLevel3> + <attribDef4> | <mathLevel2> + <attribDef4> | <mathLevel1> + attribDef4> | attribDef4;
- 
-    [■] <attribDef2>-> <TokenNameOrData> + <mathLevel1> + <attribDef4_2> + <attribDef>| <attribEnd> |
+    [ ] <attribDef> -> string | <m1>
+    [ ] <m1> -> <m2> + ('+' | '-') + <m2> + '^' <m1> | 
+                <m2> + ('+' | '-') <m2> + ('+'|'-')> <m1> |
+                <m2> + ('+'|'-') <m2> |
+                <m2>
 
-    [■] <attribDef3>-> (<TokenNameOrData> + <mathLevel2> + <attribDef4_2>) + <attribDef> | <attribEnd> | <attribDef2>
+    [ ] <m2> -> 
+                <m3> + ('*'|'/') <m3> + ('*'|'/') <m1> |
+                <m3> + ('*'|'/') <m3> |
+                <m3>
 
-    [■] <attribDef4>-> (<TokenNameOrData> + <mathLevel3> <TokenNameOrData>) + <attribDef>| <attribEnd> |<attribDef3>
-    [■] <attribDef4_2>-> (<TokenNameOrData> + <mathLevel3> <TokenNameOrData>) + <attribDef>| <attribEnd> |<TokenNameOrData>
-    
-    [■] <mathLevel1> -> + | - 
-    [■] <mathLevel2> -> * | / | 
-    [■] <mathLevel3> -> ^
+
+    [ ] <m3> -> <m4> + '^' + <m4> |
+                <m4> + '^' + <m4> +'^' + <m1> |
+                <m4>
+    [ ] <m4> -> "(" + <m1> +")" | <TokenNameOrData>
+
     [■] <TokenNameOrData> -> TokenName | number | string
     <attribEnd> -> TokenNameOrData + \n | {something} \n
 
