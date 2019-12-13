@@ -55,6 +55,7 @@ vector<string> Compiler::validate(vector<string> tokens)
     {
         cout << "Ohhh no! It not work!" << endl;
     }
+    return this->intermediateCode;
 }
 
 //Grammar: <E1>-> <var> | <E2>
@@ -77,25 +78,7 @@ bool Compiler::EntryPoint()
 
 
 
-    while (true)
-    {
-        Result result2 = EntryPoint2("");
-        debug("The system was returned from EntryPoint2 call");
-        if (result2.wasRecognized)
-        {
-            if (result2.errors != "")
-            {
-                //is a valid block of code, but errors was found
-                cout << result2.errors;
-
-                result = false;
-                break;
-            }
-        }
-        else
-            break;
-        
-    }
+    Result result2 = LoopEntryPoint2("");
 
     cout << "Intermediate code contains " << to_string(this->intermediateCode.size()) << " lines" << endl;
     cout  << " Intermediate code: " << endl;
@@ -105,6 +88,29 @@ bool Compiler::EntryPoint()
 
     return result;
     
+}
+
+Result Compiler::LoopEntryPoint2(string insertBefore)
+{
+    
+    Result result;
+    while (true)
+    {
+        Result result2 = this->EntryPoint2(insertBefore);
+        if (result2.wasRecognized)
+        {
+            result.wasRecognized = true;
+            if (result2.errors != "")
+            {
+                //is a valid block of code, but errors was found
+                return result2;
+            }
+        }
+        else
+        {
+            return result;;
+        }
+    }
 }
 
 //grammar: <E2> -> <while> | <if> | <blockOfCode> | TokenName + "=" +<attribDef> | {exit}
@@ -144,7 +150,8 @@ Result Compiler::EntryPoint2(string insertBefore)
                 //fourth sequence
                 string token = this->getNextToken();
 
-                if (string("\r\r\t ").find(token) == string::npos)
+                //%%%%%%%%%%%%%%%%%%%%%%%check if is a valid token name
+                if (string("\r\r\t{}()= ").find(token) == string::npos)
                 {
                     result.wasRecognized = true;
                     //checks if exista a variable declaration with this token
@@ -171,7 +178,7 @@ Result Compiler::EntryPoint2(string insertBefore)
                                 if (rAttribDef.errors == "")
                                 {
                                     //insert the attribuition to current toke to intermediate code
-                                    this->insertIntermediateCode(insertBefore, "ATTRIB "+ token +" "+rAttribDef.result, -1);
+                                    this->insertIntermediateCode(insertBefore, "ATTRIB "+ token +" "+rAttribDef.result, 00);
                                 }
                                 else
                                 {
@@ -193,6 +200,11 @@ Result Compiler::EntryPoint2(string insertBefore)
                         result.errors = "Unknown token '"+token+"'. Didn't you forget to declare it?";
                     }
                 }
+                else
+                {
+                    this->putBackToken(token);
+                }
+                
             }
         }
     }
@@ -298,8 +310,8 @@ Result Compiler::m1(string insertBefore)
                 {
                     Result thirdResult = this->m1(insertBefore);
                     if (thirdResult.wasRecognized){
-                        this->insertIntermediateCode(insertBefore, "MATH_POW "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
-                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, "MATH_POW "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", 00);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", 00);
                     }
                     else
                     {
@@ -314,9 +326,9 @@ Result Compiler::m1(string insertBefore)
                     Result thirdResult = this->m1(insertBefore);
                     if (thirdResult.wasRecognized)
                     {
-                        string op2 = nextToken == "+"? "MATH_SUM": "MATH_RESULT";
-                        this->insertIntermediateCode(insertBefore, op2 + " "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
-                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                        string op2 = nextToken == "+"? "MATH_SUM": "MATH_SUB";
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondM2Result.result+ " " + thirdResult.result + " " +tempDataResult + " ", 00);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + tempDataResult + " " +tempDataResult + " ", 00);
                     }
                     else
                     {
@@ -327,7 +339,7 @@ Result Compiler::m1(string insertBefore)
                 else
                 {   
                     this->putBackToken(nextToken);
-                    this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + secondM2Result.result + " " +tempDataResult + " ", -1);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstM2Result.result+ " " + secondM2Result.result + " " +tempDataResult + " ", 00);
                 }
                 result.result = tempDataResult;
                 
@@ -380,8 +392,8 @@ Result Compiler::m2(string insertBefore)
                     if (thirdResult.wasRecognized)
                     {
                         string op2 = nextToken == "*"? "MATH_MUL": "MATH_DIV";
-                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
-                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", 00);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", 00);
                     }
                     else
                     {
@@ -392,7 +404,7 @@ Result Compiler::m2(string insertBefore)
                 else
                 {   
                     this->putBackToken(nextToken);
-                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", -1);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", 00);
                 }
                 result.result = tempDataResult;
                 
@@ -446,8 +458,8 @@ Result Compiler::m3(string insertBefore)
                     if (thirdResult.wasRecognized)
                     {
                         string op2 = "MATH_POW";
-                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", -1);
-                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", -1);
+                        this->insertIntermediateCode(insertBefore, op2 + " "+secondResult.result+ " " + thirdResult.result + " " +tempDataResult + " ", 00);
+                        this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + tempDataResult + " " +tempDataResult + " ", 00);
                     }
                     else
                     {
@@ -458,7 +470,7 @@ Result Compiler::m3(string insertBefore)
                 else
                 {   
                     this->putBackToken(nextToken);
-                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", -1);
+                    this->insertIntermediateCode(insertBefore, op + " "+firstResult.result+ " " + secondResult.result + " " +tempDataResult + " ", 00);
                 }
                 result.result = tempDataResult;
                 
@@ -832,7 +844,7 @@ Result Compiler::_while(string insertBefore)
 
         //insert the retry point of while
         string returnLabelName = this->getNextTempName();
-        this->insertIntermediateCode(insertBefore, ":"+returnLabelName, -1);
+        this->insertIntermediateCode(insertBefore, ":"+returnLabelName, 00);
 
         Result rBlockOfLogic = this->blockOfLogic(insertBefore);
         //validade the block of logic
@@ -848,18 +860,21 @@ Result Compiler::_while(string insertBefore)
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
                 
                 string whileExitLabel = this->getNextTempName();
-                this->insertIntermediateCode(exitLabel, ":"+whileExitLabel, 1);
-                this->insertIntermediateCode(falseLabel, "GOTO "+whileExitLabel, 1);
+                string whileCodeMilestone = this->getNextTempName();
+                this->insertIntermediateCode(trueLabel, ":"+whileCodeMilestone, 1);
+                
+                /*this->insertIntermediateCode(exitLabel, ":"+whileExitLabel, 1);
+                this->insertIntermediateCode(falseLabel, "GOTO "+whileExitLabel, 1);*/
 
                 //validade block of code
-                Result rBlockOfCode = this->blockOfCode(falseLabel);
+                Result rBlockOfCode = this->blockOfCode(whileCodeMilestone);
                 if (rBlockOfCode.wasRecognized)
                 {
                     if (rBlockOfCode.errors == "")
                     {
                         //add the while loopback to intermediate code (the code must be after the 'exitLabel')
-                        //this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, -1);
-                        this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, -1);
+                        //this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, 00);
+                        this->insertIntermediateCode(whileCodeMilestone, "GOTO "+returnLabelName, 00);
 
                     }
                     else
@@ -908,9 +923,12 @@ Result Compiler::_if(string insertBefore)
                 string falseLabel = rBlockOfLogic.result.substr(0, rBlockOfLogic.result.find(','));
                 string exitLabel = rBlockOfLogic.result.substr(rBlockOfLogic.result.find(',')+1);
 
+                string ifTrueMalestone = this->getNextTempName();
+                this->insertIntermediateCode(trueLabel, ":"+ifTrueMalestone, 1);
+
 
                 //validade block of code
-                Result rBlockOfCode = this->blockOfCode(falseLabel);
+                Result rBlockOfCode = this->blockOfCode(ifTrueMalestone);
                 if (rBlockOfCode.wasRecognized)
                 {
                     if (rBlockOfCode.errors == "")
@@ -949,10 +967,19 @@ Result Compiler::blockOfCode(string insertBefore)
     if (openKeysToken == "{")
     {
         result.wasRecognized = true;
-        Result e2Result = EntryPoint2(insertBefore);
+        Result e2Result = LoopEntryPoint2(insertBefore);
         if (e2Result.wasRecognized)
         {
-            if (e2Result.errors != "")
+            if (e2Result.errors == "")
+            {
+            //read the '}' of block of code
+                string canonicalCloseBlock = this->getNextToken();
+                if (canonicalCloseBlock != "}")
+                {
+                    result.errors = "Error in block of code. Expected '}' but '"+canonicalCloseBlock+"' found";    
+                }
+            }
+            else
             {
                 result.errors = "Error in block of code:\r\n"+e2Result.errors;
             }
@@ -1018,13 +1045,13 @@ Result Compiler::blockOfLogic(string insertBefore)
 }
 
 
-//Grammaer: <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData>  | <blockOfLogic>
+//Grammaer: <attribDef> + <LogicOperator> + <attribDef>
 Result Compiler::parentesisD(string insertBefore)
 {
     Result result;
     result.wasRecognized = false;
     //first sequence
-    Result firstLogicOperator = this->logicTokenNameOrData(insertBefore);
+    Result firstLogicOperator = this->attribDef(insertBefore);
     if (firstLogicOperator.wasRecognized)
     {
         result.wasRecognized = true;
@@ -1036,7 +1063,7 @@ Result Compiler::parentesisD(string insertBefore)
             {
 
                 //get the second operator
-                Result secondOperator = this->logicTokenNameOrData(insertBefore);
+                Result secondOperator = this->attribDef(insertBefore);
                 if (secondOperator.wasRecognized)
                 {
 
@@ -1062,12 +1089,12 @@ Result Compiler::parentesisD(string insertBefore)
                         string falseLabelName = this->getNextTempName();
                         string exitLabelName = this->getNextTempName();
 
-                        this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ":"+trueLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ":"+falseLabelName, -1);
-                        this->insertIntermediateCode(insertBefore, ":"+exitLabelName, -1);
+                        this->insertIntermediateCode(insertBefore, operation + " " + firstLogicOperator.result + " " +secondOperator.result + " " + trueLabelName, 00);
+                        this->insertIntermediateCode(insertBefore, "JUMP "+falseLabelName, 00);
+                        this->insertIntermediateCode(insertBefore, ":"+trueLabelName, 00);
+                        this->insertIntermediateCode(insertBefore, "JUMP "+exitLabelName, 00);
+                        this->insertIntermediateCode(insertBefore, ":"+falseLabelName, 00);
+                        this->insertIntermediateCode(insertBefore, ":"+exitLabelName, 00);
 
                         result.result = trueLabelName + "," + falseLabelName+","+exitLabelName;
                     }

@@ -27,6 +27,7 @@ class Compiler{
         string getNextToken(bool skeepBlanks = false);
         void putBackToken(string token);
         bool EntryPoint();
+        Result LoopEntryPoint2(string insertBefore);
         Result EntryPoint2(string insertBefore);
         void insertIntermediateCode(string label, string code, int offset);
         string getNextTempName();

@@ -66,7 +66,7 @@ folder 'bin'.
     [■] <blockOfLogic> -> "(" + <parentesisD> + ")"
     [■] <logicTokenNameOrData> -> attribDef | blockOfLogic
 
-    [■] <parentesisD> -> <blockOfLogic> | <logicTokenNameOrData> + <LogicOperator> + <logicTokenNameOrData> 
+    [■] <parentesisD> -> <attribDef> + <LogicOperator> + <attribDef>
     [■] <logicOperator> -> > | < | >= | <= | == | !=
 ```
 
