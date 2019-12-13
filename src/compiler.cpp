@@ -864,7 +864,7 @@ Result Compiler::_while(string insertBefore)
                 this->insertIntermediateCode(trueLabel, ":"+whileCodeMilestone, 1);
                 
                 /*this->insertIntermediateCode(exitLabel, ":"+whileExitLabel, 1);
-                this->insertIntermediateCode(falseLabel, "GOTO "+whileExitLabel, 1);*/
+                this->insertIntermediateCode(falseLabel, "JUMP "+whileExitLabel, 1);*/
 
                 //validade block of code
                 Result rBlockOfCode = this->blockOfCode(whileCodeMilestone);
@@ -873,8 +873,8 @@ Result Compiler::_while(string insertBefore)
                     if (rBlockOfCode.errors == "")
                     {
                         //add the while loopback to intermediate code (the code must be after the 'exitLabel')
-                        //this->insertIntermediateCode(falseLabel, "GOTO "+returnLabelName, 00);
-                        this->insertIntermediateCode(whileCodeMilestone, "GOTO "+returnLabelName, 00);
+                        //this->insertIntermediateCode(falseLabel, "JUMP "+returnLabelName, 00);
+                        this->insertIntermediateCode(whileCodeMilestone, "JUMP "+returnLabelName, 00);
 
                     }
                     else
