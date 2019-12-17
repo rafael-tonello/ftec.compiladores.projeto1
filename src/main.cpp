@@ -1,5 +1,6 @@
 #include "main.h"
 #include "compiler.h"
+#include "tokenExtractor.h"
 
 /*
     Planning "A"
@@ -14,9 +15,18 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
-    vector<string> tokens = {
+    TokenExtractor te;
+    string t2 = string(argv[1]);
+    string fContent = readFile(t2);
+    auto tokens2 = te.getTokens(fContent);
+
+    Compiler *cmp = new Compiler();
+    auto intermediateCode = cmp->validate(tokens2);
+    auto c = intermediateCode.size();
+
+   /* vector<string> tokens = {
         "var", "\n",
             "\t", "int", "cont", ",", "num", "\n",
             "\t", "real", "cont2", "\n",
@@ -27,15 +37,7 @@ int main()
             "if", "(", "num", "==", "3",")", "{",
                 "num", "=", "5",
             "}",
-            /*"cont2", "=", "3.1415", "*", "cont", "^", "2", 
-            "if", "(", "cont", "<", "5", ")","{",
-                "num", "=", "num", "+", "cont2",
-            "}",
-            "else","{",
-                "cont", "=", "0",
-            "}",
             
-            "cont", "=", "cont", "+", "1",*/
             "if",  "(", "(", "15", "+", "5", "-", "25", "*", "18", "^", "2", ")", "<=",  "4", "*", "5", "+", "6", ")", 
             "{", 
                 "num", "=", "10", "*", "2",
@@ -44,10 +46,18 @@ int main()
         
     };
 
-    Compiler *cmp = new Compiler();
-    cmp->validate(tokens);
+    Compiler *cmp2 = new Compiler();
+    cmp2->validate(tokens);*/
 
     cout << "Hello, can you hear me? Listen well: If you give this man a ride, sweet family will die!" << endl;
 
 }
 
+string readFile(string fName)
+{
+    std::ifstream t(fName);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    return buffer.str();
+}
